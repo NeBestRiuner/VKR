@@ -1,0 +1,9 @@
+package org.example.project.API
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class LoginUserResponse(
+    val status: String,
+    val authToken: String
+)
