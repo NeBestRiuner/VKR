@@ -2,7 +2,6 @@ package org.example.project.ViewModel
 
 import androidx.lifecycle.ViewModel
 import org.example.project.API.Data.CreateUserResponse
-import org.example.project.API.Data.GetAllUsersResponse
 import org.example.project.API.Data.LoginUserResponse
 import org.example.project.API.RetrofitClient.apiService
 import org.example.project.Model.User

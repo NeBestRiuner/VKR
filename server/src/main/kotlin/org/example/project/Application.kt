@@ -2,6 +2,9 @@ package org.example.project
 
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -80,54 +83,73 @@ fun Application.module() {
                 call.respond(LoginUserResponse("error","null"))
             }
         }
-        post("/create-accounts-department/"){
-            val createDepartmentResponse = call.receive<CreateDepartmentResponse>()
-            val accountsDepartment = createDepartmentResponse.accountsDepartment
-            //id будет null, так его при создании у пользователя нет
-            val user = createDepartmentResponse.user
-            configureDatabase()
-            transaction {
-                val nowTime = now() // получить текущее время
-                AccountsDepartmentTable.insert{
-                    it[accountsName] = accountsDepartment.name
-                    it[createDate] = nowTime
-                    it[authorLogin] = user.login
-                }//создать бухгалтерию
-                val queryUser = UserTable.selectAll().where{
-                    UserTable.login eq user.login
-                }.map {
-                  row ->
-                    User(
-                        id = row[UserTable.id],
-                        login = row[UserTable.login],
-                        password = row[UserTable.password]
-                    )
-                }//получить id автора
-                val queryDepartment = AccountsDepartmentTable.selectAll().where{
-                    (accountsName eq accountsDepartment.name).and(
-                        AccountsDepartmentTable.createDate eq nowTime
-                    ).and(
-                        AccountsDepartmentTable.authorLogin eq accountsDepartment.authorLogin
-                    )
-                }.map{
-                    row ->
-                    AccountsDepartment(
-                        id = row[AccountsDepartmentTable.id],
-                        name = row[accountsName],
-                        createDate = row[AccountsDepartmentTable.createDate].toString(),
-                        authorLogin = row[AccountsDepartmentTable.authorLogin]
-                    )
-                }//получить id бухгалтерии
-                val uId: Int = queryUser[0].id!!
-                val accountsDepartmentId : Int = queryDepartment[0].id!!
-                AccountsEmployeeTable.insert{
-                    it[departmentId] = accountsDepartmentId
-                    it[userId] = uId
-                    it[dateOfEmployment] = nowTime
+        authenticate("auth-jwt") {
+            post("/create-accounts-department/") {
+
+
+                val principal = call.principal<JWTPrincipal>()
+                val login = principal?.payload?.getClaim("login")?.asString()
+                if(principal!=null) {
+                    val createDepartmentResponse = call.receive<CreateDepartmentResponse>()
+                    val accountsDepartment = createDepartmentResponse.accountsDepartment
+                    //id будет null, так его при создании у пользователя нет
+                    val user = createDepartmentResponse.user
+                    configureDatabase()
+                    transaction {
+                        val nowTime = now() // получить текущее время
+                        AccountsDepartmentTable.insert {
+                            it[accountsName] = accountsDepartment.name
+                            it[createDate] = nowTime
+                            it[authorLogin] = user.login
+                        }//создать бухгалтерию
+                        val queryUser = UserTable.selectAll().where {
+                            UserTable.login eq user.login
+                        }.map { row ->
+                            User(
+                                id = row[UserTable.id],
+                                login = row[UserTable.login],
+                                password = row[UserTable.password]
+                            )
+                        }//получить id автора
+                        val queryDepartment = AccountsDepartmentTable.selectAll().where {
+                            (accountsName eq accountsDepartment.name).and(
+                                AccountsDepartmentTable.createDate eq nowTime
+                            ).and(
+                                AccountsDepartmentTable.authorLogin eq accountsDepartment.authorLogin
+                            )
+                        }.map { row ->
+                            AccountsDepartment(
+                                id = row[AccountsDepartmentTable.id],
+                                name = row[accountsName],
+                                createDate = row[AccountsDepartmentTable.createDate].toString(),
+                                authorLogin = row[AccountsDepartmentTable.authorLogin]
+                            )
+                        }//получить id бухгалтерии
+                        val uId: Int = queryUser[0].id!!
+                        val accountsDepartmentId: Int = queryDepartment[0].id!!
+                        AccountsEmployeeTable.insert {
+                            it[departmentId] = accountsDepartmentId
+                            it[userId] = uId
+                            it[dateOfEmployment] = nowTime
+                        }
+                        //создать бухгалтера в бухгалтерии
+                    }
+                    call.respond("success")
                 }
-                //создать бухгалтера в бухгалтерии
             }
-            call.respond("success")
+            get("/get-accounts-departments/"){
+
+
+                val principal = call.principal<JWTPrincipal>()
+                val login = principal?.payload?.getClaim("login")?.asString()
+                if(principal!=null) {
+                    val user = call.receive<UserAPI>()
+                    configureDatabase()
+                    transaction {
+
+                    }
+                }
+            }
         }
     }
 }

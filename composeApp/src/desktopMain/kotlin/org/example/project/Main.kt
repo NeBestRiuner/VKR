@@ -47,7 +47,6 @@ class Main {
                             MainUserMenuScreen()
                         }
                     }
-                    sendGetHelloWorld()
                 }
             }
 
@@ -58,23 +57,4 @@ sealed class Screen {
     object Enter : Screen()
     object Register : Screen()
     object MainUserMenuScreen: Screen()
-}
-
-fun sendGetHelloWorld(){
-    //  val apiService2 = retrofit.create(APIService::class.java)
-    val call = apiService.getHelloWorld()
-    call.enqueue(object : Callback<HelloWorldResponse> {
-        override fun onResponse(call: Call<HelloWorldResponse>, response: Response<HelloWorldResponse>) {
-            if (response.isSuccessful) {
-                val result = response.body()
-                // Обработка успешного ответа
-            } else {
-                // Обработка ошибки
-            }
-        }
-
-        override fun onFailure(call: Call<HelloWorldResponse>, t: Throwable) {
-            // Обработка ошибки сети
-        }
-    })
 }

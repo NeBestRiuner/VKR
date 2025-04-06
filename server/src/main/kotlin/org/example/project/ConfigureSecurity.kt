@@ -8,7 +8,7 @@ import java.util.*
 import io.ktor.server.application.*
 
 fun Application.configureSecurity() {
-    val secret = generate256BitSecret() // Замените на реальный секрет
+    val secret = Secret.secret // Замените на реальный секрет
     val issuer = "OAO Planning"
     val audience = "Android AND Desktop APP"
     val realm = "Command Planning APP"

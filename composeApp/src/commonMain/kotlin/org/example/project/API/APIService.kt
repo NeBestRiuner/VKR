@@ -6,11 +6,11 @@ import org.example.project.API.Data.CreateUserResponse
 import org.example.project.API.Data.GetAllUsersResponse
 import org.example.project.API.Data.HelloWorldResponse
 import org.example.project.API.Data.LoginUserResponse
-import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.User
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface APIService {
@@ -29,7 +29,7 @@ interface APIService {
     ):Call<LoginUserResponse>
     @POST("/create-accounts-department/")
     fun postCreateDepartment(
-        @Body
-        createDepartmentRequest: CreateDepartmentRequest
+        @Header("Authorization") token:String,
+        @Body createDepartmentRequest: CreateDepartmentRequest
     ):Call<CreateDepartmentResponse>
 }

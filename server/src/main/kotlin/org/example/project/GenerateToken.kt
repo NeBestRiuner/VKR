@@ -5,13 +5,12 @@ import com.auth0.jwt.algorithms.Algorithm
 import java.util.Date
 
 fun generateToken(login: String): String {
-    val secret = generate256BitSecret()
-    val algorithm = Algorithm.HMAC256(secret)
+    val algorithm = Algorithm.HMAC256(Secret.secret)
 
     return JWT.create()
-        .withIssuer("your_issuer")
-        .withAudience("your_audience")
+        .withIssuer("OAO Planning")
+        .withAudience("Android AND Desktop APP")
         .withClaim("login", login)
-        .withExpiresAt(Date(System.currentTimeMillis() + 3600000)) // 1 час
+        .withExpiresAt(Date(System.currentTimeMillis() + 360000000)) // 100 часов
         .sign(algorithm)
 }
