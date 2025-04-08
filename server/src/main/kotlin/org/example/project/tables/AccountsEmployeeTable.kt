@@ -1,5 +1,6 @@
 package org.example.project.tables
 
+import org.example.project.tables.UserTable
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
 
@@ -13,4 +14,5 @@ object AccountsEmployeeTable: Table("accounting_employee") {
         foreignKey(departmentId to AccountsDepartmentTable.id)
         foreignKey(userId to UserTable.id)
     }
+    override val primaryKey = PrimaryKey(employeeId)
 }

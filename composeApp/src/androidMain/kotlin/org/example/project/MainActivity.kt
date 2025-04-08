@@ -7,10 +7,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.example.project.Model.NavRoutes
-import org.example.project.Model.User
 import org.example.project.View.EnterScreen
 import org.example.project.View.MainUserMenuScreen
 import org.example.project.View.RegisterScreen
+import org.example.project.View.TaskManagerScreen
+import org.example.project.View.UserProfileScreen
 import org.example.project.ViewModel.AuthorizeViewModel
 import org.example.project.ViewModel.MainDepartmentViewModel
 
@@ -30,6 +31,7 @@ class MainActivity : ComponentActivity() {
                         onNavigateToMainMenu = {
                             if(authorizeViewModel.user!=null){
                                 navController.navigate(NavRoutes.MainUserMenu.route)
+                                mainDepartmentViewModel.SendGetDepartmentList(authorizeViewModel.user)
                             }
                         }
                     )
@@ -44,15 +46,50 @@ class MainActivity : ComponentActivity() {
                         onCreateDepartment = { name:String ->
                             mainDepartmentViewModel.SendCreateDepartment(
                                 user = authorizeViewModel.user,
-                                accountsDepartment = mainDepartmentViewModel.createdDepartment,
                                 newName = name
                             )
+                            mainDepartmentViewModel.SendGetDepartmentList(authorizeViewModel.user)
                         },
-                        departmentList = mainDepartmentViewModel.departmentList
+                        departmentList = mainDepartmentViewModel.filteredDepartmentList,
+                        onLeaveAccount = {
+                            navController.popBackStack()
+                            authorizeViewModel.user = null
+                        },
+                        username = authorizeViewModel.user?.login ?: "Логин/Почта",
+                        onProfileClick = {
+                            navController.navigate(NavRoutes.UserProfile.route)
+                        },
+                        onGetDepartmentList = {
+                            mainDepartmentViewModel.SendGetDepartmentList(authorizeViewModel.user)
+                        },
+                        onOpenDepartment = {
+                            navController.navigate(NavRoutes.taskManagerScreen.route)
+                        },
+                        searchString = mainDepartmentViewModel.searchState,
+                        filterDepartments = mainDepartmentViewModel::FilterDepartments
                     )
                 }
-                composable(NavRoutes.CreateDepartment.route) {
-
+                composable(NavRoutes.UserProfile.route) {
+                    authorizeViewModel.getProfileInfo(authorizeViewModel.user)
+                    UserProfileScreen(
+                        onNavigateBack = {navController.popBackStack()},
+                        name = authorizeViewModel.nameState,
+                        surname = authorizeViewModel.surnameState,
+                        patronymic = authorizeViewModel.patronymicState,
+                        login = authorizeViewModel.loginState,
+                        phoneNumber = authorizeViewModel.phoneNumberState,
+                        onSaveChanges = {
+                            authorizeViewModel.postUpdateProfileInfo(user = authorizeViewModel.user)
+                        },
+                        onChangePasswordVM = authorizeViewModel::updatePassword
+                    )
+                }
+                composable(NavRoutes.taskManagerScreen.route){
+                    TaskManagerScreen(
+                        {
+                            navController.popBackStack()
+                        }
+                    )
                 }
             }
         }

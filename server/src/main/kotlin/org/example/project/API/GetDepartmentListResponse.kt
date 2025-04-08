@@ -3,7 +3,7 @@ package org.example.project.API
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class  LoginUserResponse(
+data class GetDepartmentListResponse(
     val status: String,
-    val authToken: String
+    val departmentList: List<AccountsDepartmentAPI>
 )

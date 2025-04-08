@@ -11,27 +11,30 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.receive
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.example.project.API.AccountsDepartmentAPI
 import org.example.project.API.CreateUserResponse
+import org.example.project.API.GetDepartmentListResponse
+import org.example.project.API.GetProfileInfo
+import org.example.project.API.GetProfileInfoResponse
 import org.example.project.API.LoginUserResponse
+import org.example.project.API.UpdateProfileInfoRequest
 import org.example.project.API.UserAPI
 import org.example.project.model.AccountsDepartment
 import org.example.project.model.CreateDepartmentResponse
+import org.example.project.model.ProfileInfo
 import org.example.project.model.User
 import org.example.project.tables.AccountsDepartmentTable
-import org.example.project.tables.AccountsDepartmentTable.accountsName
 import org.example.project.tables.AccountsEmployeeTable
 import org.example.project.tables.UserTable
-import org.jetbrains.exposed.sql.Expression
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 
 import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.javatime.CurrentTimestamp
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import java.time.Instant.now
-import java.time.LocalDateTime
 
 fun main() {
     embeddedServer(Netty, port = SERVER_PORT, host = "0.0.0.0", module = Application::module)
@@ -112,7 +115,7 @@ fun Application.module() {
                             )
                         }//получить id автора
                         val queryDepartment = AccountsDepartmentTable.selectAll().where {
-                            (accountsName eq accountsDepartment.name).and(
+                            (AccountsDepartmentTable.accountsName eq accountsDepartment.name).and(
                                 AccountsDepartmentTable.createDate eq nowTime
                             ).and(
                                 AccountsDepartmentTable.authorLogin eq accountsDepartment.authorLogin
@@ -120,7 +123,7 @@ fun Application.module() {
                         }.map { row ->
                             AccountsDepartment(
                                 id = row[AccountsDepartmentTable.id],
-                                name = row[accountsName],
+                                name = row[AccountsDepartmentTable.accountsName],
                                 createDate = row[AccountsDepartmentTable.createDate].toString(),
                                 authorLogin = row[AccountsDepartmentTable.authorLogin]
                             )
@@ -143,12 +146,120 @@ fun Application.module() {
                 val principal = call.principal<JWTPrincipal>()
                 val login = principal?.payload?.getClaim("login")?.asString()
                 if(principal!=null) {
-                    val user = call.receive<UserAPI>()
+                    val userJSON:String? = call.request.queryParameters["user"]
+                    val userLogin = userJSON?.substringAfter("login=")
+                        ?.substringBefore(",")?.trim()
                     configureDatabase()
-                    transaction {
+                    // что делать, если одинаковые названия атрибутов у User и Department
+                    val result = transaction {
+                        val query = UserTable.join(AccountsEmployeeTable,JoinType.INNER){
+                            (UserTable.id eq AccountsEmployeeTable.userId).and(
+                                UserTable.login eq userLogin.toString()
+                            )
+                        }.join(AccountsDepartmentTable,JoinType.INNER){
+                            AccountsDepartmentTable.id eq AccountsEmployeeTable.departmentId
+                        }
+                        query.selectAll().map {
+                                row ->
+                                    val dateStr = row[AccountsDepartmentTable.createDate].toString()
+                                    AccountsDepartmentAPI(
+                                        name = row[AccountsDepartmentTable.accountsName],
+                                        createDate = dateStr.substringBefore("T")+"\n"+
+                                                dateStr.substringAfter("T").substringBefore("."),
+                                        authorLogin = row[AccountsDepartmentTable.authorLogin]
+                                    )
+                        }
+                    }
 
+                    call.respond(GetDepartmentListResponse("success",result))
+
+                }
+            }
+            get("/get-user-profile-info/"){
+
+                val principal = call.principal<JWTPrincipal>()
+                val login = principal?.payload?.getClaim("login")?.asString()
+                val userJSON:String? = call.request.queryParameters["user"]
+                val userLogin = userJSON?.substringAfter("login=")
+                    ?.substringBefore(",")?.trim()
+                if(principal!=null) {
+                    var result:GetProfileInfo? = null
+                    transaction {
+                        val resultsql = UserTable.selectAll().where{
+                            UserTable.login eq userLogin.toString()
+                        }.map{
+                            row ->
+                                GetProfileInfo(user = UserAPI(
+                                    login = row[UserTable.login],
+                                    password = ""
+                                ),
+                                    profileInfo = ProfileInfo(
+                                        name = row[UserTable.firstname],
+                                        surname = row[UserTable.lastname],
+                                        patronymic = row[UserTable.patronymic],
+                                        phoneNumber = ""
+                                    )
+                                )
+                        }
+                        result = resultsql[0]
+                    }
+                    call.respond(GetProfileInfoResponse("success",result))
+                }
+            }
+            post("/update-user-profile-info/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+                val updateProfileInfoRequest = call.receive<UpdateProfileInfoRequest>()
+                var result:GetProfileInfo? = null
+                if(principal!=null && updateProfileInfoRequest.user.login == loginSecret) {
+                    transaction {
+                        UserTable.update({UserTable.login eq updateProfileInfoRequest.user.login})
+                        {
+                            updateProfileInfoRequest.profileInfo.name.let{
+                                    newName -> it[firstname] = newName.toString()
+                            }
+                            updateProfileInfoRequest.profileInfo.surname.let {
+                                    newSurname -> it[lastname] = newSurname.toString()
+                            }
+                            updateProfileInfoRequest.profileInfo.patronymic.let{
+                                    newPatronymic -> it[patronymic] = newPatronymic.toString()
+                            }
+                            updateProfileInfoRequest.profileInfo.phoneNumber.let{
+                                    newPhoneNumber ->
+                                if (newPhoneNumber != null && newPhoneNumber != "") {
+                                    it[phone] = newPhoneNumber.toLong()
+                                }
+                            }
+                            // нет валидации логина
+                            updateProfileInfoRequest.user.login.let{
+                                    newLogin -> it[login] = newLogin
+                            }
+                            // нет валидации пароля
+                            if(updateProfileInfoRequest.user.password!=""){
+                                updateProfileInfoRequest.user.password.let{
+                                        newPassword -> it[password] = newPassword
+                                }
+                            }
+                        }
+                        UserTable.selectAll().where{
+                            UserTable.login eq loginSecret
+                        }.map{
+                            row ->
+                            result = GetProfileInfo(user = UserAPI(
+                                login = row[UserTable.login],
+                                password = row[UserTable.password]
+                            ),
+                                profileInfo = ProfileInfo(
+                                    name = row[UserTable.firstname],
+                                    surname = row[UserTable.lastname],
+                                    patronymic = row[UserTable.patronymic],
+                                    phoneNumber = ""
+                                )
+                            )
+                        }
                     }
                 }
+                call.respond(GetProfileInfoResponse("success", result))
             }
         }
     }
