@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -53,6 +54,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.UserSession
+import org.example.project.View.Card.EnterDepartmentCard
+import org.example.project.View.Card.PopupCard
+import org.example.project.View.Table.DepartmentTable
 
 
 @Composable
@@ -65,9 +69,12 @@ fun MainUserMenuScreen(modifier: Modifier = Modifier,
                        onGetDepartmentList: ()->Unit,
                        onOpenDepartment: ()-> Unit,
                        searchString: MutableState<String>,
-                       filterDepartments: (String)->Unit
+                       filterDepartments: (String)->Unit,
+                       selectDepartment: (AccountsDepartment)->Unit,
+                       onEnterDepartment: (String)->Unit
 ){
     var showCard by remember { mutableStateOf(false) }
+    var enterDepartmentCard by remember{ mutableStateOf(false) }
     Box(){
             Row(
                 modifier.fillMaxWidth()
@@ -102,21 +109,38 @@ fun MainUserMenuScreen(modifier: Modifier = Modifier,
                                     },
                     label={Text("Поиск")},
                     modifier = modifier.padding(10.dp))
-                Text("Список бухгалтерий",
-                    modifier = modifier.padding(10.dp),
-                    fontWeight = FontWeight(700),
-                    fontSize = 20.sp
-                )
-                DepartmentTable(departmentList = departmentList,
-                    onOpenDepartment = onOpenDepartment)
-                Button(onClick = {
-                    showCard = true
-                },
-                    modifier = modifier.padding(15.dp)
-                ){
-                    Text("Создать бухгалтерию")
+                Row{
+                    Text("Список бухгалтерий",
+                        modifier = modifier.padding(10.dp),
+                        fontWeight = FontWeight(700),
+                        fontSize = 20.sp
+                    )
+                    IconButton(onClick = onGetDepartmentList){
+                        Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Обновить список")
+                    }
                 }
-
+                DepartmentTable(departmentList = departmentList,
+                    onOpenDepartment = onOpenDepartment,
+                    selectDepartment = selectDepartment
+                )
+                Row {
+                    Button(
+                        onClick = {
+                            showCard = true
+                        },
+                        modifier = modifier.padding(15.dp)
+                    ) {
+                        Text("Создать бухгалтерию")
+                    }
+                    Button(
+                        onClick = {
+                            enterDepartmentCard = true
+                        },
+                        modifier = modifier.padding(15.dp)
+                    ) {
+                        Text("Войти по коду")
+                    }
+                }
             }
             if(showCard){
                 PopupCard (
@@ -125,178 +149,11 @@ fun MainUserMenuScreen(modifier: Modifier = Modifier,
                     onGetDepartmentList = onGetDepartmentList
                 )
             }
-        }
-}
-@Composable
-fun PopupCard(
-    onDismiss: () -> Unit,
-    onCreateDepartment: (String) -> Unit,
-    onGetDepartmentList: () -> Unit
-) {
-    val name = remember{ mutableStateOf("") }
-    // Затемнение фона
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f))
-            .clickable(onClick = onDismiss)
-    ) {
-        // Сама карточка
-        Card(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(300.dp)
-                .clickable { } // предотвращает закрытие при клике на карточку
-        ) {
-            Row(
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxWidth()
-            ){
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Стрелка назад"
-                    )
-                }
-
-            }
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth().height(600.dp)
-            )
-            {
-                TextField(value = name.value, onValueChange = {newName->name.value=newName}, label= {
-                    Text("Название бухгалтерии")
-                })
-                Button(modifier = Modifier.padding(top = 60.dp), onClick = {
-                    onCreateDepartment.invoke(name.value)
-                    onDismiss.invoke()
-                    onGetDepartmentList()
-                }){
-                    Text("Создать бухгалтерию")
-                }
+            if(enterDepartmentCard){
+                EnterDepartmentCard(
+                    onDismiss = {enterDepartmentCard = false},
+                    onEnterDepartment = onEnterDepartment
+                )
             }
         }
-    }
-}
-
-@Composable
-fun DepartmentTable(modifier:Modifier=Modifier,
-                    departmentList:SnapshotStateList<AccountsDepartment>,
-                    onOpenDepartment: ()-> Unit){
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ){
-        Row(
-            modifier = modifier.background(Color.LightGray).
-            height(50.dp).drawWithContent {
-                drawContent()
-                val strokeWidth = 1.0f
-                val width = size.width
-                val height = size.height
-                val borderColor = Color.Black
-                // Верхняя граница
-                drawLine(
-                    color = borderColor,
-                    start = Offset(0f, 0f),
-                    end = Offset(width, 0f),
-                    strokeWidth = strokeWidth
-                )
-
-                // Левая граница
-                drawLine(
-                    color = borderColor,
-                    start = Offset(0f, 0f),
-                    end = Offset(0f, height),
-                    strokeWidth = strokeWidth
-                )
-
-                // Правая граница
-                drawLine(
-                    color = borderColor,
-                    start = Offset(width, 0f),
-                    end = Offset(width, height),
-                    strokeWidth = strokeWidth
-                )
-            },
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            DepartmentTableHeader("Название")
-            VerticalDivider(thickness = 1.dp, color = Color.DarkGray)
-            DepartmentTableHeader("Дата создания")
-            VerticalDivider(thickness = 1.dp, color = Color.DarkGray)
-            DepartmentTableHeader("Количество сотрудников")
-        }
-        LazyColumn(modifier = modifier.border(1.dp, color = Color.Black)
-            .size(width = 300.dp, height = 400.dp)) {
-            items(departmentList){ department ->
-                DepartmentTableItem(department.name,department.createDate, onOpenDepartment)
-            }
-        }
-    }
-}
-@Composable
-fun DepartmentTableHeader(name:String){
-    Box(
-        modifier = Modifier
-            .width(100.dp)
-            .padding(8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = name,
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-fun DepartmentTableItem(name:String,time:String, onOpenDepartment: ()-> Unit){
-    Row(Modifier.fillMaxWidth().height(100.dp).clickable {
-        onOpenDepartment.invoke()
-    }){
-        Box(
-            modifier = Modifier
-                .width(100.dp)
-                .padding(8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = name,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center
-            )
-        }
-        //VerticalDivider(thickness = 1.dp, color = Color.DarkGray)
-        Box(
-            modifier = Modifier
-                .width(100.dp)
-                .padding(8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = time,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center
-            )
-        }
-        //VerticalDivider(thickness = 1.dp, color = Color.DarkGray)
-        Box(
-            modifier = Modifier
-                .width(100.dp)
-                .padding(8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "in progress",
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
 }

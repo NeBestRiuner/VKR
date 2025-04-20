@@ -1,5 +1,6 @@
 package org.example.project.View
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +20,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,15 +40,35 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.BottomNavItem
+import org.example.project.Model.Line
+import org.example.project.Model.PostRectangle
+import org.example.project.Model.User
 import org.example.project.View.Box.AnalyticBox
 import org.example.project.View.Box.BusinessProcessBox
+import org.example.project.View.Box.HierarchyBox
 import org.example.project.View.Box.HomeScreen
-import org.example.project.View.Box.IerarchyBox
 import org.example.project.View.Box.SettingsBox
 
 @Composable
-fun TaskManagerScreen(onLeaveDepartment:()->Unit){
+fun TaskManagerScreen(
+    onLeaveDepartment:()->Unit,
+    currentDepartment: AccountsDepartment,
+    userList: SnapshotStateList<User>,
+    onGetUserList: ()->Unit,
+    inviteUserSetting: MutableState<Boolean>,
+    changeUserSettings: MutableState<Boolean>,
+    onGetPermission: (User) -> Unit,
+    createdInviteCode: MutableState<String>,
+    onCreateInviteCode: ()->Unit,
+    postRectangleList: SnapshotStateList<PostRectangle>,
+    selectedEmployee: MutableState<User>,
+    employeeFreeList: SnapshotStateList<User>,
+    selectedPostRectangle: MutableState<PostRectangle>,
+    onGetUserListHierarchy: ()->Unit,
+    lineList: SnapshotStateList<Line>
+){
     val navController = rememberNavController()
 
     Scaffold(
@@ -55,13 +80,25 @@ fun TaskManagerScreen(onLeaveDepartment:()->Unit){
                 IconButton(onClick = onLeaveDepartment) {
                     Icon(imageVector = Icons.Filled.Close, contentDescription = "Кнопка выхода")
                 }
-                Text("Бухгалтерия")
+                Text(currentDepartment.name)
                 IconButton(onClick = {}) {
                     Icon(imageVector = Icons.Filled.Notifications, contentDescription = "Уведомления")
                 }
             }
             Box(modifier = Modifier.padding(innerPadding)) {
-                NavigationGraph(navController = navController)
+                NavigationGraph(navController = navController, userList, onGetUserList,
+                    inviteUserSetting = inviteUserSetting,
+                    changeUserSettings = changeUserSettings,
+                    onGetPermission = onGetPermission,
+                    createdInviteCode = createdInviteCode,
+                    onCreateInviteCode = onCreateInviteCode,
+                    postRectangleList = postRectangleList,
+                    selectedEmployee = selectedEmployee,
+                    employeeFreeList = employeeFreeList,
+                    selectedPostRectangle = selectedPostRectangle,
+                    onGetUserListHierarchy = onGetUserListHierarchy,
+                    lineList = lineList
+                )
             }
         }
     }
@@ -71,7 +108,7 @@ fun TaskManagerScreen(onLeaveDepartment:()->Unit){
 fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
         BottomNavItem.Calendar,
-        BottomNavItem.Ierarchy,
+        BottomNavItem.Hierarchy,
         BottomNavItem.BusinessProcess,
         BottomNavItem.Analytic,
         BottomNavItem.Settings
@@ -100,17 +137,48 @@ fun BottomNavigationBar(navController: NavController) {
 }
 
 @Composable
-fun NavigationGraph(navController: NavHostController) {
+fun NavigationGraph(navController: NavHostController, userList: SnapshotStateList<User>,
+                    onGetUserList: () -> Unit,
+                    inviteUserSetting: MutableState<Boolean>,
+                    changeUserSettings: MutableState<Boolean>,
+                    onGetPermission: (User)-> Unit,
+                    createdInviteCode: MutableState<String>,
+                    onCreateInviteCode: ()->Unit,
+                    postRectangleList: SnapshotStateList<PostRectangle>,
+                    selectedEmployee: MutableState<User>,
+                    employeeFreeList: SnapshotStateList<User>,
+                    selectedPostRectangle: MutableState<PostRectangle>,
+                    onGetUserListHierarchy: () -> Unit,
+                    lineList: SnapshotStateList<Line>
+) {
+
     NavHost(
         navController = navController,
         startDestination = BottomNavItem.Calendar.route,
         modifier = Modifier.fillMaxSize()
     ) {
         composable(BottomNavItem.Calendar.route) { HomeScreen() }
-        composable(BottomNavItem.Ierarchy.route) { IerarchyBox() }
+        composable(BottomNavItem.Hierarchy.route) { HierarchyBox(
+                postRectangleList = postRectangleList,
+                selectedEmployee = selectedEmployee,
+                employeeFreeList = employeeFreeList,
+                selectedPostRectangle = selectedPostRectangle,
+                onGetUserList = onGetUserListHierarchy,
+                lineList = lineList
+            )
+        }
         composable(BottomNavItem.BusinessProcess.route) { BusinessProcessBox() }
         composable(BottomNavItem.Analytic.route) { AnalyticBox() }
-        composable(BottomNavItem.Settings.route) { SettingsBox() }
+        composable(BottomNavItem.Settings.route) {
+            SettingsBox(
+                userList = userList,
+                onGetUserList = onGetUserList,
+                inviteUserSetting = inviteUserSetting,
+                changeUserSettings = changeUserSettings,
+                onGetPermission = onGetPermission,
+                createdInviteCode = createdInviteCode,
+                onCreateInviteCode = onCreateInviteCode
+            ) }
     }
 }
 
@@ -122,8 +190,25 @@ fun NavigationGraph(navController: NavHostController) {
 
 
 
+@SuppressLint("UnrememberedMutableState")
 @Composable
 @Preview
 fun TaskManagerScreenProfile(){
-    TaskManagerScreen({})
+    TaskManagerScreen(
+        {},
+        AccountsDepartment(-1,"","","",3),
+        emptyList<User>().toMutableStateList(),
+        {},
+        mutableStateOf(false),
+        mutableStateOf(false),
+        {},
+        mutableStateOf(""),
+        {},
+        emptyList<PostRectangle>().toMutableStateList(),
+        selectedEmployee = mutableStateOf(User("","")),
+        employeeFreeList = emptyList<User>().toMutableStateList(),
+        selectedPostRectangle = mutableStateOf(PostRectangle(lineList = emptyList<Line>().toMutableStateList())),
+        onGetUserListHierarchy = {},
+        lineList = emptyList<Line>().toMutableStateList()
+    )
 }

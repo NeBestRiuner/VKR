@@ -7,5 +7,6 @@ import kotlinx.serialization.Serializable
 data class AccountsDepartmentAPI(
     val name: String,
     val createDate: String, // строка для хранения времени
-    val authorLogin: String
+    val authorLogin: String,
+    val employeesNumber: Int
 )

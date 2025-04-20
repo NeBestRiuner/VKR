@@ -1,9 +1,14 @@
 package org.example.project.ViewModel
 
+import android.content.Context
 import android.nfc.Tag
+import android.widget.Toast
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.example.project.API.Data.CreateUserResponse
 import org.example.project.API.Data.GetProfileInfoResponse
 import org.example.project.API.Data.LoginUserResponse
@@ -15,40 +20,45 @@ import org.example.project.Model.UserSession
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.IOException
+import java.net.SocketTimeoutException
 
 class AuthorizeViewModel : ViewModel() {
     var user: UserSession? = null
-    var profileInfo: ProfileInfo? = null
-    var nameState = mutableStateOf("")
-    var surnameState = mutableStateOf("")
-    var patronymicState =  mutableStateOf("")
-    var loginState =  mutableStateOf("")
-    var phoneNumberState =  mutableStateOf("")
 
-
+    var errorMessage = mutableStateOf("")
 
 
     fun sendCreateUser( login: String, password: String, onNavigateToEnter:()->Unit){
+        try{
         val call = apiService.postCreateUser(User(login,password))
         call.enqueue(object : Callback<CreateUserResponse> {
             override fun onResponse(call: Call<CreateUserResponse>, response: Response<CreateUserResponse>) {
                 if (response.isSuccessful) {
                     val result = response.body()
                     if (result != null) {
-                        if(result.status=="success"){
+                        if(result.status=="200"){
                             onNavigateToEnter()
+                        }else{
+                            errorMessage.value = "Ошибка сервера"
+                            println(errorMessage.value)
                         }
                     }
                     // Обработка успешного ответа
                 } else {
                     // Обработка ошибки
+                    errorMessage.value = "Ошибка сервера"
                 }
             }
 
             override fun onFailure(call: Call<CreateUserResponse>, t: Throwable) {
                 // Обработка ошибки сети
+                errorMessage.value = "Ошибка сети"
             }
         })
+        }catch (e: SocketTimeoutException){
+            errorMessage.value = "Ошибка сети"
+        }
     }
     fun sendLoginUser(login:String, password:String, onNavigateToMainMenu:()->Unit){
         val call = apiService.getLoginUser(User(login,password))
@@ -58,7 +68,7 @@ class AuthorizeViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val result = response.body()
                     if (result != null) {
-                        if(result.status=="success"){
+                        if(result.status=="200"){
                             user = UserSession(login,password,result.authToken)
                             onNavigateToMainMenu()
                         }
@@ -75,80 +85,5 @@ class AuthorizeViewModel : ViewModel() {
         })
 
     }
-    fun getProfileInfo(user: UserSession?){
-        val token = user?.token
-        val call = apiService.getProfileInfo("Bearer $token",User(user?.login ?: "",""))
 
-        call.enqueue(object : Callback<GetProfileInfoResponse> {
-            override fun onResponse(call: Call<GetProfileInfoResponse>, response: Response<GetProfileInfoResponse>) {
-                if (response.isSuccessful) {
-                    val result = response.body()
-                    if (result != null) {
-                        if(result.status=="success"){
-                            profileInfo = result.getProfileInfo?.profileInfo
-                            nameState.value = result.getProfileInfo?.profileInfo?.name ?: ""
-                            surnameState.value = result.getProfileInfo?.profileInfo?.surname ?: ""
-                            patronymicState.value = result.getProfileInfo?.profileInfo?.patronymic ?: ""
-                            phoneNumberState.value = result.getProfileInfo?.profileInfo?.phoneNumber ?: ""
-                            loginState.value = result.getProfileInfo?.user?.login ?: ""
-                        }
-                    }
-                    // Обработка успешного ответа
-                } else {
-                    // Обработка ошибки
-                }
-            }
-
-            override fun onFailure(call: Call<GetProfileInfoResponse>, t: Throwable) {
-                // Обработка ошибки сети
-            }
-        })
-
-    }
-    fun postUpdateProfileInfo(user: UserSession? ){
-        val token = user?.token
-        val call = apiService.postUpdateProfileInfo("Bearer $token",
-            UpdateProfileInfoRequest(
-                user = User(loginState.value, user?.password ?: ""),
-                profileInfo = ProfileInfo(name = nameState.value,
-                    surname = surnameState.value,
-                    patronymic = patronymicState.value,
-                    phoneNumber = phoneNumberState.value)
-            )
-        )
-
-        call.enqueue(object : Callback<GetProfileInfoResponse> {
-            override fun onResponse(call: Call<GetProfileInfoResponse>, response: Response<GetProfileInfoResponse>) {
-                if (response.isSuccessful) {
-                    val result = response.body()
-                    if (result != null) {
-                        if(result.status=="success"){
-                            profileInfo = result.getProfileInfo?.profileInfo
-                            nameState.value = result.getProfileInfo?.profileInfo?.name ?: ""
-                            surnameState.value = result.getProfileInfo?.profileInfo?.surname ?: ""
-                            patronymicState.value = result.getProfileInfo?.profileInfo?.patronymic ?: ""
-                            phoneNumberState.value = result.getProfileInfo?.profileInfo?.phoneNumber ?: ""
-                            loginState.value = result.getProfileInfo?.user?.login ?: ""
-                        }
-                    }
-                    // Обработка успешного ответа
-                } else {
-                    // Обработка ошибки
-                }
-            }
-
-            override fun onFailure(call: Call<GetProfileInfoResponse>, t: Throwable) {
-                // Обработка ошибки сети
-            }
-        })
-
-    }
-    fun updatePassword(oldPassword:String, newPassword:String, repeatPassword: String){
-        if(newPassword == repeatPassword && ((user?.password ?: "") == oldPassword)){
-            user?.password = newPassword
-            postUpdateProfileInfo(user)
-        }else{
-            println("Пароль проверку на клиенте не прошёл")
-        }
-    }
 }

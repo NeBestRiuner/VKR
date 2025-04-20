@@ -11,5 +11,6 @@ data class AccountsDepartment(
     val id: Int?,
     val name: String,
     val createDate: String, // строка для хранения времени
-    val authorLogin: String
+    val authorLogin: String,
+    val employeesNumber: Int
 )

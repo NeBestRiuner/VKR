@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import org.example.project.API.Data.CreateDepartmentRequest
 import org.example.project.API.Data.CreateDepartmentResponse
 import org.example.project.API.Data.CreateUserResponse
+import org.example.project.API.Data.EnterDepartmentTokenResponse
 import org.example.project.API.Data.GetDepartmentListResponse
 import org.example.project.API.RetrofitClient.apiService
 import org.example.project.Model.AccountsDepartment
@@ -17,14 +18,14 @@ import retrofit2.Response
 
 class MainDepartmentViewModel: ViewModel() {
     var createdDepartment = AccountsDepartment(-1, "TestDepartment",
-        "","Admin")
+        "","Admin",1)
     var departmentList = emptyList<AccountsDepartment>().toMutableStateList()
     var searchState = mutableStateOf("")
     var filteredDepartmentList = emptyList<AccountsDepartment>().toMutableStateList()
 
     fun SendCreateDepartment(user: UserSession?, newName: String){
         createdDepartment = AccountsDepartment(createdDepartment.id,newName,
-            createdDepartment.createDate, user?.login ?: ""
+            createdDepartment.createDate, user?.login ?: "", employeesNumber = 1
         )
         if(user!=null){
             val token = user.token
@@ -39,8 +40,9 @@ class MainDepartmentViewModel: ViewModel() {
                     if (response.isSuccessful) {
                         val result = response.body()
                         if (result != null) {
-                            if(result.status=="success"){
-                                println("Success")
+                            if(result.status=="200"){
+                                println("status: 200")
+                                SendGetDepartmentList(user)
                             }
                         }
                         // Обработка успешного ответа
@@ -67,7 +69,7 @@ class MainDepartmentViewModel: ViewModel() {
                     if (response.isSuccessful) {
                         val result = response.body()
                         if (result != null) {
-                            if(result.status=="success"){
+                            if(result.status=="200"){
                                 departmentList.removeAll(departmentList)
                                 departmentList.addAll(result.departmentList)
                                 FilterDepartments("")
@@ -98,6 +100,33 @@ class MainDepartmentViewModel: ViewModel() {
                                                     department.createDate.contains(newSearch, ignoreCase = true)
                                         }
             )
+        }
+    }
+    fun EnterDepartment(user: UserSession?, enterToken: String){
+        if(user!=null){
+            val token = user.token
+            val call = apiService.enterDepartment(
+                "Bearer $token", enterToken
+            )
+            call.enqueue(object : Callback<EnterDepartmentTokenResponse> {
+                override fun onResponse(call: Call<EnterDepartmentTokenResponse>, response: Response<EnterDepartmentTokenResponse>) {
+                    if (response.isSuccessful) {
+                        val result = response.body()
+                        if (result != null) {
+                            if(result.status=="200"){
+
+                            }
+                        }
+                        // Обработка успешного ответа
+                    } else {
+                        // Обработка ошибки
+                    }
+                }
+
+                override fun onFailure(call: Call<EnterDepartmentTokenResponse>, t: Throwable) {
+                    // Обработка ошибки сети
+                }
+            })
         }
     }
 }

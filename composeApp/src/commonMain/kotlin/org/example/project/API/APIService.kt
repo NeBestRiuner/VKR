@@ -2,13 +2,17 @@ package org.example.project.API
 
 import org.example.project.API.Data.CreateDepartmentRequest
 import org.example.project.API.Data.CreateDepartmentResponse
+import org.example.project.API.Data.CreateInviteCodeResponse
 import org.example.project.API.Data.CreateUserResponse
+import org.example.project.API.Data.EnterDepartmentTokenResponse
 import org.example.project.API.Data.GetAllUsersResponse
 import org.example.project.API.Data.GetDepartmentListResponse
+import org.example.project.API.Data.GetPermissionResponse
 import org.example.project.API.Data.GetProfileInfoResponse
-import org.example.project.API.Data.HelloWorldResponse
+import org.example.project.API.Data.GetUsersListResponse
 import org.example.project.API.Data.LoginUserResponse
 import org.example.project.API.Data.UpdateProfileInfoRequest
+import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.User
 import retrofit2.Call
 import retrofit2.http.Body
@@ -19,8 +23,7 @@ import retrofit2.http.Query
 
 interface APIService {
 
-    @GET("/HelloWorld/")
-    fun getHelloWorld(): Call<HelloWorldResponse>
+
     @GET("/get-all-users/")
     fun getAllUsers(): Call<GetAllUsersResponse>
     @POST("/create-user/")
@@ -51,4 +54,25 @@ interface APIService {
         @Header("Authorization") token:String,
         @Body updateProfileInfoRequest: UpdateProfileInfoRequest
     ):Call<GetProfileInfoResponse>
+    @GET("/get-users-list/")
+    fun getUsersList(
+        @Header("Authorization") token:String,
+        @Query("accountDepartment") department: AccountsDepartment
+    ):Call<GetUsersListResponse>
+    @GET("/get-permission/")
+    fun getPermission(
+        @Header("Authorization") token:String,
+        @Query("user") user: User,
+        @Query("accountDepartment") department: AccountsDepartment
+    ):Call<GetPermissionResponse>
+    @POST("/create-invite-code/")
+    fun createInviteCode(
+        @Header("Authorization") token:String,
+        @Body accountDepartment: AccountsDepartment
+        ):Call<CreateInviteCodeResponse>
+    @POST("/enter-department/")
+    fun enterDepartment(
+        @Header("Authorization") token:String,
+        @Body enterToken: String
+    ):Call<EnterDepartmentTokenResponse>
 }

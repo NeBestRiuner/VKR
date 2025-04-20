@@ -46,7 +46,8 @@ fun UserProfileScreen(
     login: MutableState<String>,
     phoneNumber: MutableState<String>,
     onSaveChanges: ()->Unit,
-    onChangePasswordVM: (String,String,String) -> Unit
+    onChangePasswordVM: (String,String,String, UserSession?) -> Unit,
+    userSession: UserSession?
 ){
     var showCard by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize()){
@@ -139,7 +140,8 @@ fun UserProfileScreen(
         if(showCard){
             ChangePasswordCard (
                 onDismiss = {showCard = false},
-                onChangePasswordVM
+                onChangePasswordVM,
+                userSession
             )
         }
 
@@ -159,6 +161,7 @@ fun UserProfileScreenPreview(){
         remember {  mutableStateOf("")},
         remember {  mutableStateOf("")},
         {},
-        {_,_,_ ->}
+        {_,_,_,_ ->},
+        userSession = null
         )
 }

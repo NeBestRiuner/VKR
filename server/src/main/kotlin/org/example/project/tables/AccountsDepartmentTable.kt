@@ -9,5 +9,6 @@ object AccountsDepartmentTable: Table("accounts_department") {
     val accountsName = varchar("accounts_name", 30)
     val createDate = timestamp("create_date")
     val authorLogin = varchar("author_login",30)
+    val employeesNumber = integer("employees_number")
     override val primaryKey = PrimaryKey(id)
 }
