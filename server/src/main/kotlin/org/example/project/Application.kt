@@ -11,6 +11,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.receive
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.encodeToByteArray
 import org.example.project.API.AccountsDepartmentAPI
 import org.example.project.API.CreateAccountDepartmentResponse
 import org.example.project.API.CreateInviteCodeResponse
@@ -23,6 +24,8 @@ import org.example.project.API.GetProfileInfoResponse
 import org.example.project.API.GetUsersListResponse
 import org.example.project.API.LoginUserResponse
 import org.example.project.API.PermissionAPI
+import org.example.project.API.SendHierarchyRequest
+import org.example.project.API.SendHierarchyResponse
 import org.example.project.API.UpdateProfileInfoRequest
 import org.example.project.API.UserAPI
 import org.example.project.model.AccountsDepartment
@@ -34,13 +37,15 @@ import org.example.project.model.User
 import org.example.project.tables.AccountsDepartmentTable
 import org.example.project.tables.AccountsEmployeeTable
 import org.example.project.tables.EmployeePermissionTable
+import org.example.project.tables.HierarchyTable
 import org.example.project.tables.PermissionTable
 import org.example.project.tables.UserTable
-import org.jetbrains.exposed.sql.Join
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.deleteWhere
 
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.insertAndGetId
@@ -48,10 +53,8 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.net.URLDecoder
-import java.time.Instant
 import java.time.Instant.now
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import kotlinx.serialization.protobuf.ProtoBuf
 
 fun main() {
     embeddedServer(Netty, port = SERVER_PORT, host = "0.0.0.0", module = Application::module)
@@ -510,6 +513,56 @@ fun Application.module() {
                     }
                 }else{
                     call.respond(EnterDepartmentTokenResponse("401","Токен не прошёл проверку"))
+                }
+            }
+            post("/send-hierarchy/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+                val sendHierarchyRequest = call.receive<SendHierarchyRequest>()
+                var result:String? = null
+                transaction {
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sendHierarchyRequest.accountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sendHierarchyRequest.accountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+                    if(AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                            (UserTable.id eq AccountsEmployeeTable.userId).and(
+                                UserTable.login eq loginSecret.toString()).and(
+                                AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                            )
+                        }.selectAll().count() > 0
+                    ){
+                        result="200"
+                        if(HierarchyTable.selectAll().where(
+                                HierarchyTable.departmentId eq departmentIdList[0]
+                            ).count()>0
+                            ){
+                            HierarchyTable.deleteWhere {
+                                HierarchyTable.departmentId eq departmentIdList[0]
+                            }
+                        }
+                        val protobuf = ProtoBuf{}
+                        val postRectanglesBinary = protobuf.encodeToByteArray(sendHierarchyRequest.postRectangleAPIList)
+                        val lineListBinary = protobuf.encodeToByteArray(sendHierarchyRequest.lineList)
+                        HierarchyTable.insert {
+                            it[departmentId] = departmentIdList[0]
+                            it[postRectangles] = postRectanglesBinary
+                            it[lines] = lineListBinary
+                        }
+                    }else{
+                        // не участник бухгалтерии
+                    }
+                }
+                for(prapi in sendHierarchyRequest.postRectangleAPIList){
+                    prapi.printPRAPI()
+                }
+                if(result!=null){
+                    call.respond(SendHierarchyResponse(result.toString(),"Успешно выполнен запрос"))
+                }else{
+                    call.respond(SendHierarchyResponse("500","Server error"))
                 }
             }
         }

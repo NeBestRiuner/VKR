@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    kotlin("plugin.serialization") version "1.9.0"
 }
 
 kotlin {
@@ -43,6 +44,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.retrofit2)
             implementation(projects.shared)
+            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

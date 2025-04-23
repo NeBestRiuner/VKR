@@ -40,6 +40,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import org.example.project.API.Data.PostRectangleAPI
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.BottomNavItem
 import org.example.project.Model.Line
@@ -67,7 +68,9 @@ fun TaskManagerScreen(
     employeeFreeList: SnapshotStateList<User>,
     selectedPostRectangle: MutableState<PostRectangle>,
     onGetUserListHierarchy: ()->Unit,
-    lineList: SnapshotStateList<Line>
+    lineList: SnapshotStateList<Line>,
+    postRectangleListAPI: SnapshotStateList<PostRectangleAPI>,
+    sendHierarchy: ()->Unit
 ){
     val navController = rememberNavController()
 
@@ -97,7 +100,9 @@ fun TaskManagerScreen(
                     employeeFreeList = employeeFreeList,
                     selectedPostRectangle = selectedPostRectangle,
                     onGetUserListHierarchy = onGetUserListHierarchy,
-                    lineList = lineList
+                    lineList = lineList,
+                    postRectangleListAPI = postRectangleListAPI,
+                    sendHierarchy = sendHierarchy
                 )
             }
         }
@@ -149,7 +154,9 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                     employeeFreeList: SnapshotStateList<User>,
                     selectedPostRectangle: MutableState<PostRectangle>,
                     onGetUserListHierarchy: () -> Unit,
-                    lineList: SnapshotStateList<Line>
+                    lineList: SnapshotStateList<Line>,
+                    postRectangleListAPI: SnapshotStateList<PostRectangleAPI>,
+                    sendHierarchy: ()->Unit
 ) {
 
     NavHost(
@@ -164,7 +171,9 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                 employeeFreeList = employeeFreeList,
                 selectedPostRectangle = selectedPostRectangle,
                 onGetUserList = onGetUserListHierarchy,
-                lineList = lineList
+                lineList = lineList,
+                postRectangleListAPI = postRectangleListAPI,
+                sendHierarchy = sendHierarchy
             )
         }
         composable(BottomNavItem.BusinessProcess.route) { BusinessProcessBox() }
@@ -209,6 +218,8 @@ fun TaskManagerScreenProfile(){
         employeeFreeList = emptyList<User>().toMutableStateList(),
         selectedPostRectangle = mutableStateOf(PostRectangle(lineList = emptyList<Line>().toMutableStateList())),
         onGetUserListHierarchy = {},
-        lineList = emptyList<Line>().toMutableStateList()
+        lineList = emptyList<Line>().toMutableStateList(),
+        postRectangleListAPI = emptyList<PostRectangleAPI>().toMutableStateList(),
+        sendHierarchy = {}
     )
 }

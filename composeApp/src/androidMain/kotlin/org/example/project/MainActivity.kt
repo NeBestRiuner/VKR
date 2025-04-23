@@ -137,7 +137,15 @@ class MainActivity : ComponentActivity() {
                                 taskManagerViewModel.selectedAccountsDepartment.value
                             )
                         },
-                        lineList = hierarchyViewModel.lineList
+                        lineList = hierarchyViewModel.lineList,
+                        postRectangleListAPI = hierarchyViewModel.postRectangleAPIList,
+                        sendHierarchy =
+                        {
+                            hierarchyViewModel.sendHierarchy(
+                                authorizeViewModel.user,
+                                taskManagerViewModel.selectedAccountsDepartment.value
+                            )
+                        }
                     )
                 }
             }

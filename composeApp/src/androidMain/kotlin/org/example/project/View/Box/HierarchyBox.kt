@@ -35,6 +35,9 @@ import org.example.project.Model.InfiniteScrollState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -42,10 +45,15 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import org.example.project.API.Data.PostRectangleAPI
 import org.example.project.Model.Line
 import org.example.project.Model.PostRectangle
 import org.example.project.Model.User
 import org.example.project.View.Card.AddEmployeeToPostCard
+import kotlin.math.PI
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Composable
 fun HierarchyBox(postRectangleList: SnapshotStateList<PostRectangle>,
@@ -53,49 +61,142 @@ fun HierarchyBox(postRectangleList: SnapshotStateList<PostRectangle>,
                  employeeFreeList: SnapshotStateList<User>,
                  selectedPostRectangle: MutableState<PostRectangle>,
                  onGetUserList: ()->Unit,
-                 lineList: SnapshotStateList<Line>
+                 lineList: SnapshotStateList<Line>,
+                 postRectangleListAPI: SnapshotStateList<PostRectangleAPI>,
+                 sendHierarchy:()->Unit
 ) {
     var showAddPostCard = remember { mutableStateOf(false) }
     var isArrowed = remember { mutableStateOf(false) }
     var secondDot = remember { mutableStateOf(0) }
-    var firstDotRectangle =  remember { mutableStateOf(PostRectangle(lineList = emptyList<Line>().toMutableStateList())) }
+    var firstDotRectangle =  remember { mutableStateOf(PostRectangle()) }
     Box(modifier = Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,){
+            horizontalAlignment = Alignment.CenterHorizontally,) {
             Text("Иерархия бухгалтерии")
-            Row(Modifier.fillMaxWidth()){
-                PostDispenser(postRectangleList = postRectangleList, isArrowed = isArrowed,
+            Row(Modifier.fillMaxWidth()) {
+                PostDispenser(
+                    postRectangleList = postRectangleList, isArrowed = isArrowed,
                     secondDot = secondDot, firstDotRectangle = firstDotRectangle,
-                    lineList = lineList)
+                    lineList = lineList
+                )
                 LinkDispenser(isArrowed)
             }
-            InfiniteCanvas {
-                if (postRectangleList.isNotEmpty()) {
-                    postRectangleList.forEach { postRectangle ->
-                        postRectangle.PostRectangleCompose(
-                            onAddCard = {
-                                showAddPostCard.value = true
-                                onGetUserList.invoke()
-                            },
-                            selectedPost = selectedPostRectangle
-                        )
+            Box(modifier=Modifier.weight(1f)){
+                InfiniteCanvas {
+                    if (lineList.isNotEmpty()) {
+                        lineList.forEach { line ->
+                            Canvas(
+                                modifier = Modifier.fillMaxSize().background(Color.Transparent)
+                            ) {
+                                var firstX = line.firstPostRectangle.centerOffsetX
+                                var firstY = line.firstPostRectangle.centerOffsetY
+                                var secondX = line.secondPostRectangle.centerOffsetX
+                                var secondY = line.secondPostRectangle.centerOffsetY
+                                val angle = atan2(
+                                    secondY.value - firstY.value,
+                                    secondX.value - firstX.value
+                                )
+                                val arrowLength = 40f // Длина "усов" стрелки
+                                val arrowAngle = PI.toFloat() / 6 // Угол стрелки (30 градусов)
+                                drawLine(
+                                    color = Color.Blue,
+                                    start = Offset(firstX.value, firstY.value),
+                                    end = Offset(secondX.value, secondY.value),
+                                    strokeWidth = 4f // Толщина линии в пикселях
+                                )
+                                drawLine(
+                                    color = Color.Blue,
+                                    start = Offset(
+                                        (firstX.value + secondX.value) / 2,
+                                        (firstY.value + secondY.value) / 2
+                                    ),
+                                    end = Offset(
+                                        ((firstX.value + secondX.value) / 2) - arrowLength * cos(
+                                            angle + arrowAngle
+                                        ),
+                                        ((firstY.value + secondY.value) / 2) - arrowLength * sin(
+                                            angle + arrowAngle
+                                        )
+                                    ),
+                                    strokeWidth = 6f
+                                )
+                                drawLine(
+                                    color = Color.Blue,
+                                    start = Offset(
+                                        (firstX.value + secondX.value) / 2,
+                                        (firstY.value + secondY.value) / 2
+                                    ),
+                                    end = Offset(
+                                        ((firstX.value + secondX.value) / 2) - arrowLength * cos(
+                                            angle - arrowAngle
+                                        ),
+                                        ((firstY.value + secondY.value) / 2) - arrowLength * sin(
+                                            angle - arrowAngle
+                                        )
+                                    ),
+                                    strokeWidth = 6f
+                                )
+                            }
+                        }
                     }
-                }
-                if(lineList.isNotEmpty()){
-                    lineList.forEach{
-                        line ->
-                        Canvas(
-                            modifier = Modifier.fillMaxSize().background(Color.Transparent)
-                        ) {
-                            drawLine(
-                                color = Color.Blue,
-                                start = Offset(line.firstX.value,line.firstY.value),
-                                end = Offset(line.secondX.value,line.secondY.value),
-                                strokeWidth = 4f // Толщина линии в пикселях
+                    if (postRectangleList.isNotEmpty()) {
+                        postRectangleList.forEach { postRectangle ->
+                            postRectangle.PostRectangleCompose(
+                                onAddCard = {
+                                    showAddPostCard.value = true
+                                    onGetUserList.invoke()
+                                },
+                                selectedPost = selectedPostRectangle
                             )
                         }
                     }
                 }
+            }
+            Button(onClick = {
+                postRectangleListAPI.removeAll(postRectangleListAPI.toList())
+                for(postRectangle in postRectangleList){
+                    postRectangleListAPI.add(
+                        PostRectangleAPI(
+                            uId = postRectangle.uId!!,
+                            positionX = postRectangle.position.value.x,
+                            positionY = postRectangle.position.value.y,
+                            sizeWidth = postRectangle.size.width.value,
+                            sizeHeight = postRectangle.size.height.value,
+                            text = postRectangle.text.value,
+                            employeeList = postRectangle.employeeList.toList(),
+                            leaderPostRectangleAPI = null,
+                            centerOffsetX = postRectangle.centerOffsetX.value,
+                            centerOffsetY = postRectangle.centerOffsetY.value
+                        )
+                    )
+                }
+                // формирование лидеров postAPIRectangle
+                for(postRectangle in postRectangleList){
+                    if(postRectangle.leaderPostRectangle != null){
+                        var postRectangleAPILeader: PostRectangleAPI? = null
+                        var postRectangleAPILower: PostRectangleAPI? = null
+                        for(postRectangleAPI in postRectangleListAPI){
+                            if(postRectangle.uId == postRectangleAPI.uId){
+                                postRectangleAPILower = postRectangleAPI
+                            }
+                            if(postRectangle.leaderPostRectangle!!.uId == postRectangleAPI.uId){
+                                postRectangleAPILeader = postRectangleAPI
+                            }
+                        }
+                        postRectangleAPILower!!.leaderPostRectangleAPI = postRectangleAPILeader
+                    }
+                }
+                for(postRectangle in postRectangleList){
+                    println(postRectangle.uId.toString()+" "+ (postRectangle.leaderPostRectangle?.uId
+                        ?: "null").toString() +" "+postRectangle.text.value)
+                }
+                for(prapi in postRectangleListAPI){
+                    prapi.printPRAPI()
+                }
+                sendHierarchy.invoke()
+            }
+            ){
+                Text("Сохранить изменения")
             }
         }
         if(showAddPostCard.value){
@@ -122,7 +223,9 @@ fun HierarchyBoxPreview(){
             )
         ),
         onGetUserList = {},
-        lineList =  emptyList<Line>().toMutableStateList()
+        lineList =  emptyList<Line>().toMutableStateList(),
+        postRectangleListAPI = emptyList<PostRectangleAPI>().toMutableStateList(),
+        sendHierarchy = {}
     )
 }
 
@@ -191,13 +294,12 @@ fun InfiniteCanvas(
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
             .pointerInput(Unit) {
                 detectDragGestures { change, dragAmount ->
                     change.consume()
                     scrollState.onScroll(dragAmount)
                 }
-            }.clipToBounds()
+            }.clipToBounds().fillMaxSize()
     ) {
         Box(
             modifier = Modifier

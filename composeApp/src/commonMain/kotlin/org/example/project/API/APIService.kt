@@ -11,6 +11,8 @@ import org.example.project.API.Data.GetPermissionResponse
 import org.example.project.API.Data.GetProfileInfoResponse
 import org.example.project.API.Data.GetUsersListResponse
 import org.example.project.API.Data.LoginUserResponse
+import org.example.project.API.Data.SendHierarchyRequest
+import org.example.project.API.Data.SendHierarchyResponse
 import org.example.project.API.Data.UpdateProfileInfoRequest
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.User
@@ -75,4 +77,9 @@ interface APIService {
         @Header("Authorization") token:String,
         @Body enterToken: String
     ):Call<EnterDepartmentTokenResponse>
+    @POST("/send-hierarchy/")
+    fun sendHierarchy(
+        @Header("Authorization") token:String,
+        @Body sendHierarchyRequest: SendHierarchyRequest
+    ):Call<SendHierarchyResponse>
 }

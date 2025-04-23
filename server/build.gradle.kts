@@ -37,6 +37,8 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jwt-jvm:3.0.3")
 
     implementation("com.google.code.gson:gson:2.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.6.0")
+
 
     testImplementation(libs.ktor.server.tests)
     testImplementation(libs.kotlin.test.junit)

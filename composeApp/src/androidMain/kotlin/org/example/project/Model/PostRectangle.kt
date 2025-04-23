@@ -52,15 +52,19 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
+import kotlinx.serialization.Serializable
 import org.example.project.View.Card.AddEmployeeToPostCard
 import kotlin.math.roundToInt
 
+
 data class PostRectangle(
+    var uId: Int? = null,
     var position: MutableState<Offset> = mutableStateOf(Offset(0f,0f)),
     var size: DpSize = DpSize(100.dp, 60.dp),
     val color: Color = Color(Color.White.value),
@@ -70,10 +74,14 @@ data class PostRectangle(
     var isArrowed: MutableState<Boolean> = mutableStateOf(false),
     var secondDot : MutableState<Int> = mutableStateOf(0),
     var firstDotRectangle: MutableState<PostRectangle>? = null,
-    var centerOffsetX: MutableState<Float> = mutableStateOf(size.width.value/2),
-    var centerOffsetY: MutableState<Float> = mutableStateOf(size.height.value/2),
+    var centerOffsetX: MutableState<Float> = mutableStateOf(130f),
+    var centerOffsetY: MutableState<Float> = mutableStateOf(90f),
     var lineList: SnapshotStateList<Line> = emptyList<Line>().toMutableStateList()
 ){
+    init{
+        uId = this.hashCode()
+    }
+
     @Composable
     fun PostRectangleCompose(
             onAddCard: ()->Unit,
@@ -107,10 +115,8 @@ data class PostRectangle(
                             leaderPostRectangle = firstDotRectangle!!.value
                             lineList.add(
                                 Line(
-                                    firstX = leaderPostRectangle!!.centerOffsetX,
-                                    firstY = leaderPostRectangle!!.centerOffsetY,
-                                    secondX = centerOffsetX,
-                                    secondY = centerOffsetY
+                                    firstPostRectangle = leaderPostRectangle!!,
+                                    secondPostRectangle = this
                                 )
                             )
                             isArrowed.value = false
@@ -171,7 +177,7 @@ data class PostRectangle(
                          onAddCard.invoke()
                          if(employeeList.size > 1){
                              size = DpSize((((employeeList.size+1)*50).dp), size.height)
-                             centerOffsetX.value+=25
+                                centerOffsetX.value+= 70
                          }
                      }){
                          Icon(imageVector = Icons.Filled.AddCircle,
