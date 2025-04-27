@@ -1,16 +1,148 @@
 package org.example.project.View.Box
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import org.example.project.Model.AccountsDepartment
+import org.example.project.Model.BottomNavItem
+import org.example.project.Model.Task
+import org.example.project.View.Card.CreateTaskCard
+import org.example.project.View.Table.CustomCalendar
+import org.example.project.View.Table.DepartmentTableItem
+import java.text.SimpleDateFormat
+import java.util.Calendar
 
 
 // Экранные компоненты
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    taskList: SnapshotStateList<Task>
+) {
+    val selectedType = remember{ mutableStateOf("Calendar") }
+    val selectedData = remember{ mutableStateOf("Month") }
+    val showCreateTask = remember{ mutableStateOf(false) }
+    val month = remember { mutableStateOf( Calendar.getInstance().get(Calendar.MONTH) + 1) }
+    val year = remember { mutableStateOf(Calendar.getInstance().get(Calendar.YEAR)) }
+    val day = remember { mutableStateOf(Calendar.getInstance().get(Calendar.DAY_OF_MONTH)) }
     Box(modifier = Modifier.fillMaxSize()) {
-        Text("Главный экран")
+        Column(modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally){
+            Row(modifier = Modifier.fillMaxWidth()){
+                IconToggleButton(
+                    modifier = Modifier.weight(1.0f),
+                    checked= selectedType.value == "Calendar",
+                    onCheckedChange={
+                        selectedType.value = "Calendar"
+                    }
+                ){
+                    Text("Календарь")
+                }
+                IconToggleButton(
+                    modifier = Modifier.weight(1.0f),
+                    checked = selectedType.value == "List",
+                    onCheckedChange = {
+                        selectedType.value = "List"
+                    }
+                ) {
+                    Text("Список")
+                }
+            }
+            if(selectedType.value == "Calendar"){
+                Row(modifier = Modifier.fillMaxWidth()){
+                    IconToggleButton(
+                        modifier = Modifier.weight(1.0f),
+                        checked = selectedData.value == "Month",
+                        onCheckedChange = {
+                            selectedData.value = "Month"
+                        }
+                    ) {
+                        Text("Месяц")
+                    }
+                    IconToggleButton(
+                        modifier = Modifier.weight(1.0f),
+                        checked= selectedData.value == "Week",
+                        onCheckedChange={
+                            selectedData.value = "Week"
+                        }
+                    ){
+                        Text("Неделя")
+                    }
+                    IconToggleButton(
+                        modifier = Modifier.weight(1.0f),
+                        checked = selectedData.value == "Day",
+                        onCheckedChange = {
+                            selectedData.value = "Day"
+                        }
+                    ) {
+                        Text("День")
+                    }
+                }
+                Text("Март, 2025", modifier = Modifier.padding(10.dp))
+                if(selectedData.value == "Month"){
+                    CustomCalendar(year = year.value,month = month.value)
+                }
+                if(selectedData.value == "Week"){
+
+                }
+                if(selectedData.value == "Day"){
+                    Text(modifier = Modifier.padding(10.dp),text = "${day.value} Марта")
+                    LazyColumn(modifier = Modifier.border(1.dp, color = Color.Black)
+                        .weight(1f)) {
+                        items(taskList){ department ->
+
+                        }
+                    }
+                }
+            }
+            else{
+                LazyColumn(modifier = Modifier.border(1.dp, color = Color.Black)
+                    .weight(1f)) {
+                    items(taskList){ department ->
+
+                    }
+                }
+            }
+            Button(onClick = {
+                showCreateTask.value = true
+            }){
+                Text("Создать задачу")
+            }
+        }
+        if(showCreateTask.value){
+            CreateTaskCard(
+                onDismiss = {
+                    showCreateTask.value  = false
+                }
+            )
+        }
     }
+}
+@Preview
+@Composable
+fun HomeScreenPreview() {
+    HomeScreen(
+        emptyList<Task>().toMutableStateList()
+    )
 }

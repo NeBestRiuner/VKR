@@ -79,7 +79,7 @@ data class PostRectangle(
     var lineList: SnapshotStateList<Line> = emptyList<Line>().toMutableStateList()
 ){
     init{
-        uId = this.hashCode()
+        if(uId == null) uId = this.hashCode()
     }
 
     @Composable

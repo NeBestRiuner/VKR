@@ -45,6 +45,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import org.example.project.API.Data.LineAPI
 import org.example.project.API.Data.PostRectangleAPI
 import org.example.project.Model.Line
 import org.example.project.Model.PostRectangle
@@ -63,13 +64,17 @@ fun HierarchyBox(postRectangleList: SnapshotStateList<PostRectangle>,
                  onGetUserList: ()->Unit,
                  lineList: SnapshotStateList<Line>,
                  postRectangleListAPI: SnapshotStateList<PostRectangleAPI>,
-                 sendHierarchy:()->Unit
+                 sendHierarchy:()->Unit,
+                 getHierarchy:(MutableState<Boolean>, MutableState<Int>,
+                               MutableState<PostRectangle>)->Unit,
+                 lineAPIList: SnapshotStateList<LineAPI>
 ) {
     var showAddPostCard = remember { mutableStateOf(false) }
     var isArrowed = remember { mutableStateOf(false) }
     var secondDot = remember { mutableStateOf(0) }
     var firstDotRectangle =  remember { mutableStateOf(PostRectangle()) }
     Box(modifier = Modifier.fillMaxSize()) {
+        getHierarchy.invoke(isArrowed,secondDot,firstDotRectangle)
         Column(Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,) {
             Text("Иерархия бухгалтерии")
@@ -225,7 +230,9 @@ fun HierarchyBoxPreview(){
         onGetUserList = {},
         lineList =  emptyList<Line>().toMutableStateList(),
         postRectangleListAPI = emptyList<PostRectangleAPI>().toMutableStateList(),
-        sendHierarchy = {}
+        sendHierarchy = {},
+        getHierarchy = {row,pow,go->},
+        lineAPIList = emptyList<LineAPI>().toMutableStateList()
     )
 }
 

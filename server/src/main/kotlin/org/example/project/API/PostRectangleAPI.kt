@@ -4,7 +4,6 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
-@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 
 data class PostRectangleAPI(
@@ -15,7 +14,6 @@ data class PostRectangleAPI(
     val sizeHeight: Float,
     val text: String,
     val employeeList: List<UserAPI>,
-    @EncodeDefault
     var leaderPostRectangleAPI: PostRectangleAPI? = null,
     var centerOffsetX: Float,
     var centerOffsetY: Float,

@@ -12,6 +12,8 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.example.project.API.AccountsDepartmentAPI
 import org.example.project.API.CreateAccountDepartmentResponse
 import org.example.project.API.CreateInviteCodeResponse
@@ -55,6 +57,11 @@ import org.jetbrains.exposed.sql.update
 import java.net.URLDecoder
 import java.time.Instant.now
 import kotlinx.serialization.protobuf.ProtoBuf
+import org.example.project.API.GetHierarchyResponse
+import org.example.project.API.LineAPI
+import org.example.project.API.PostRectangleAPI
+import org.example.project.model.Bytes
+import kotlin.io.encoding.Base64
 
 fun main() {
     embeddedServer(Netty, port = SERVER_PORT, host = "0.0.0.0", module = Application::module)
@@ -544,9 +551,17 @@ fun Application.module() {
                                 HierarchyTable.departmentId eq departmentIdList[0]
                             }
                         }
-                        val protobuf = ProtoBuf{}
-                        val postRectanglesBinary = protobuf.encodeToByteArray(sendHierarchyRequest.postRectangleAPIList)
-                        val lineListBinary = protobuf.encodeToByteArray(sendHierarchyRequest.lineList)
+                        val json = Json { prettyPrint = true }
+                        val postRectanglesJson = json.encodeToString(sendHierarchyRequest.postRectangleAPIList)
+                        println("JSON:\n$postRectanglesJson")
+                        val postRectanglesBinary = postRectanglesJson.toByteArray()
+                        println("\nByteArray: ${postRectanglesBinary.contentToString()}")
+                        println("Size: ${postRectanglesBinary.size} bytes")
+                        val lineListJson = json.encodeToString(sendHierarchyRequest.lineList)
+                        println("JSON:\n$lineListJson")
+                        val lineListBinary = lineListJson.toByteArray()
+                        println("\nByteArray: ${lineListBinary.contentToString()}")
+                        println("Size: ${lineListBinary.size} bytes")
                         HierarchyTable.insert {
                             it[departmentId] = departmentIdList[0]
                             it[postRectangles] = postRectanglesBinary
@@ -563,6 +578,72 @@ fun Application.module() {
                     call.respond(SendHierarchyResponse(result.toString(),"Успешно выполнен запрос"))
                 }else{
                     call.respond(SendHierarchyResponse("500","Server error"))
+                }
+            }
+            get("/get-hierarchy/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+                val accountDepartmentJSON: String? = call.request.queryParameters["accountDepartment"]
+                var result:String? = null
+                val selectedAccountDepartment = parseAccountsDepartmentFromQuery(
+                    accountDepartmentJSON.toString()
+                )
+                var postRectangleList:List<PostRectangleAPI>? = null
+                var lineList:List<LineAPI>? = null
+
+                transaction {
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq selectedAccountDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq selectedAccountDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+                    if(AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                            (UserTable.id eq AccountsEmployeeTable.userId).and(
+                                UserTable.login eq loginSecret.toString()).and(
+                                AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                            )
+                        }.selectAll().count() > 0
+                    ){
+                        if(HierarchyTable.selectAll().where{
+                            HierarchyTable.departmentId eq departmentIdList[0]
+                            }.count()>0)
+                        {
+                            val pairBytes =
+                                HierarchyTable.selectAll().where{
+                                    HierarchyTable.departmentId eq departmentIdList[0]
+                                }.map{
+                                    row ->
+                                        Bytes(
+                                            row[HierarchyTable.postRectangles],
+                                            row[HierarchyTable.lines]
+                                        )
+                                }
+                            val postRectanglesJson = String(pairBytes[0].postRectangleBytes)
+                            postRectangleList = Json.decodeFromString<List<PostRectangleAPI>>(postRectanglesJson)
+                            val lineJson = String(pairBytes[0].lineListBytes)
+                            lineList = Json.decodeFromString<List<LineAPI>>(lineJson)
+                            for(pr in postRectangleList!!){
+                                pr.printPRAPI()
+                            }
+                            for(line in lineList!!){
+                                println(line.firstUID.toString() + " " + line.secondUID.toString())
+                            }
+                            result = "true"
+                        }
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="true"){
+                    call.respond(
+                        GetHierarchyResponse("200","Успех", postRectangleList, lineList)
+                    )
+                }else{
+                    call.respond(
+                        GetHierarchyResponse("500","Ошибка на сервере", null,null)
+                    )
                 }
             }
         }

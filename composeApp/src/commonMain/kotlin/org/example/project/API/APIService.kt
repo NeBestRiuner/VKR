@@ -7,6 +7,7 @@ import org.example.project.API.Data.CreateUserResponse
 import org.example.project.API.Data.EnterDepartmentTokenResponse
 import org.example.project.API.Data.GetAllUsersResponse
 import org.example.project.API.Data.GetDepartmentListResponse
+import org.example.project.API.Data.GetHierarchyResponse
 import org.example.project.API.Data.GetPermissionResponse
 import org.example.project.API.Data.GetProfileInfoResponse
 import org.example.project.API.Data.GetUsersListResponse
@@ -82,4 +83,9 @@ interface APIService {
         @Header("Authorization") token:String,
         @Body sendHierarchyRequest: SendHierarchyRequest
     ):Call<SendHierarchyResponse>
+    @GET("/get-hierarchy/")
+    fun getHierarchy(
+        @Header("Authorization") token:String,
+        @Query("accountDepartment") department: AccountsDepartment
+    ):Call<GetHierarchyResponse>
 }

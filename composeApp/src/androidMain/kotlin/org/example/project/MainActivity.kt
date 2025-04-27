@@ -16,6 +16,7 @@ import org.example.project.View.RegisterScreen
 import org.example.project.View.TaskManagerScreen
 import org.example.project.View.UserProfileScreen
 import org.example.project.ViewModel.AuthorizeViewModel
+import org.example.project.ViewModel.CalendarViewModel
 import org.example.project.ViewModel.HierarchyViewModel
 import org.example.project.ViewModel.MainDepartmentViewModel
 import org.example.project.ViewModel.ProfileViewModel
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity() {
             val taskManagerViewModel = TaskManagerViewModel()
             val settingsViewModel = SettingsViewModel()
             val hierarchyViewModel = HierarchyViewModel()
+            val calendarViewModel = CalendarViewModel()
             NavHost(navController = navController, startDestination = NavRoutes.Enter.route){
                 composable(NavRoutes.Enter.route){
                     EnterScreen(
@@ -67,6 +69,8 @@ class MainActivity : ComponentActivity() {
                         onLeaveAccount = {
                             navController.popBackStack()
                             authorizeViewModel.user = null
+                            hierarchyViewModel.lineList.removeAll(hierarchyViewModel.lineList)
+                            hierarchyViewModel.postRectangleList.removeAll(hierarchyViewModel.postRectangleList)
                         },
                         username = authorizeViewModel.user?.login ?: "Логин/Почта",
                         onProfileClick = {
@@ -145,7 +149,17 @@ class MainActivity : ComponentActivity() {
                                 authorizeViewModel.user,
                                 taskManagerViewModel.selectedAccountsDepartment.value
                             )
-                        }
+                        },
+                        getHierarchy = {
+                                       isArrowed, secondDot, firstDotRectangle ->
+                            hierarchyViewModel.getHierarchy(
+                                authorizeViewModel.user,
+                                taskManagerViewModel.selectedAccountsDepartment.value,
+                                isArrowed,secondDot,firstDotRectangle
+                            )
+                        },
+                        lineAPIList = hierarchyViewModel.lineAPIList,
+                        taskList = calendarViewModel.taskList
                     )
                 }
             }

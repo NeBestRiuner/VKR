@@ -4,7 +4,11 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import org.example.project.API.Data.GetHierarchyResponse
 import org.example.project.API.Data.GetUsersListResponse
 import org.example.project.API.Data.LineAPI
 import org.example.project.API.Data.PostRectangleAPI
@@ -27,6 +31,7 @@ class HierarchyViewModel: ViewModel() {
     var selectedPost = mutableStateOf(PostRectangle())
     var lineList =  emptyList<Line>().toMutableStateList()
     var postRectangleAPIList = emptyList<PostRectangleAPI>().toMutableStateList()
+    var lineAPIList = emptyList<LineAPI>().toMutableStateList()
 
     fun getUsersList(user: UserSession?, accountsDepartment: AccountsDepartment){
         val token = user?.token
@@ -56,7 +61,69 @@ class HierarchyViewModel: ViewModel() {
 
     fun loadPostRectangle( isArrowed: MutableState<Boolean>, secondDot: MutableState<Int>,
                                   firstDotRectangle: MutableState<PostRectangle>,
-                                  lineList: SnapshotStateList<Line>){
+                           ){
+        postRectangleList.removeAll(postRectangleList)
+        lineList.removeAll(lineList)
+        for(prAPI in postRectangleAPIList){
+            postRectangleList.add(
+                PostRectangle(
+                    uId = prAPI.uId,
+                    position = mutableStateOf(
+                        Offset(
+                            prAPI.positionX,
+                            prAPI.positionY
+                        )
+                    ),
+                    size = DpSize(
+                        prAPI.sizeWidth.dp,
+                        prAPI.sizeHeight.dp
+                    ),
+                    text = mutableStateOf(prAPI.text),
+                    employeeList = prAPI.employeeList.toMutableStateList(),
+                    leaderPostRectangle = null,
+                    isArrowed = isArrowed,
+                    secondDot = secondDot,
+                    firstDotRectangle = firstDotRectangle,
+                    centerOffsetX = mutableStateOf(prAPI.centerOffsetX),
+                    centerOffsetY = mutableStateOf(prAPI.centerOffsetY),
+                    lineList = lineList
+                )
+            )
+        }
+        // формирование лидеров postAPIRectangle
+        for(postRectangleAPI in postRectangleAPIList){
+            if(postRectangleAPI.leaderPostRectangleAPI != null){
+                var postRectangleLeader: PostRectangle? = null
+                var postRectangleLower: PostRectangle? = null
+                for(postRectangle in postRectangleList){
+                    if(postRectangleAPI.uId == postRectangle.uId){
+                        postRectangleLower = postRectangle
+                    }
+                    if(postRectangleAPI.leaderPostRectangleAPI!!.uId == postRectangle.uId){
+                        postRectangleLeader = postRectangle
+                    }
+                }
+                postRectangleLower!!.leaderPostRectangle = postRectangleLeader
+            }
+            for(line in lineAPIList){
+                var firstPR:PostRectangle? = null
+                var secondPR:PostRectangle? = null
+                for(pr in postRectangleList){
+                    if(pr.uId == line.firstUID){
+                        firstPR = pr
+                    }
+                    if(pr.uId == line.secondUID){
+                        secondPR = pr
+                    }
+                }
+                lineList.add(
+                    Line(
+                        firstPR!!,
+                        secondPR!!
+                    )
+                )
+            }
+        }
 
     }
     fun sendHierarchy(user: UserSession?, accountsDepartment: AccountsDepartment){
@@ -94,6 +161,46 @@ class HierarchyViewModel: ViewModel() {
             }
 
             override fun onFailure(call: Call<SendHierarchyResponse>, t: Throwable) {
+                // Обработка ошибки сети
+            }
+        })
+    }
+    fun getHierarchy(user: UserSession?, accountsDepartment: AccountsDepartment,
+                     isArrowed: MutableState<Boolean>, secondDot: MutableState<Int>,
+                     firstDotRectangle: MutableState<PostRectangle>,){
+        val token = user?.token
+
+        val call = apiService.getHierarchy("Bearer $token",
+           accountsDepartment
+        )
+
+        call.enqueue(object : Callback<GetHierarchyResponse> {
+            override fun onResponse(call: Call<GetHierarchyResponse>, response: Response<GetHierarchyResponse>) {
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    if (result != null) {
+                        if(result.status=="200"){
+                            postRectangleAPIList.removeAll(postRectangleAPIList)
+                            lineAPIList.removeAll(lineAPIList)
+                            if(result.postRectangleAPIList!=null){
+                                postRectangleAPIList.addAll(result.postRectangleAPIList)
+                                if(result.lineList!=null){
+                                    lineAPIList.addAll(result.lineList)
+                                    loadPostRectangle(isArrowed,secondDot,firstDotRectangle)
+                                }
+                            }
+
+                            println(postRectangleAPIList)
+                            println(lineAPIList)
+                        }
+                    }
+                    // Обработка успешного ответа
+                } else {
+                    // Обработка ошибки
+                }
+            }
+
+            override fun onFailure(call: Call<GetHierarchyResponse>, t: Throwable) {
                 // Обработка ошибки сети
             }
         })
