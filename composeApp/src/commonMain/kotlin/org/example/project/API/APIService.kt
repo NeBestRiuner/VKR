@@ -3,6 +3,8 @@ package org.example.project.API
 import org.example.project.API.Data.CreateDepartmentRequest
 import org.example.project.API.Data.CreateDepartmentResponse
 import org.example.project.API.Data.CreateInviteCodeResponse
+import org.example.project.API.Data.CreateTaskRequest
+import org.example.project.API.Data.CreateTaskResponse
 import org.example.project.API.Data.CreateUserResponse
 import org.example.project.API.Data.EnterDepartmentTokenResponse
 import org.example.project.API.Data.GetAllUsersResponse
@@ -10,6 +12,7 @@ import org.example.project.API.Data.GetDepartmentListResponse
 import org.example.project.API.Data.GetHierarchyResponse
 import org.example.project.API.Data.GetPermissionResponse
 import org.example.project.API.Data.GetProfileInfoResponse
+import org.example.project.API.Data.GetTaskListResponse
 import org.example.project.API.Data.GetUsersListResponse
 import org.example.project.API.Data.LoginUserResponse
 import org.example.project.API.Data.SendHierarchyRequest
@@ -88,4 +91,18 @@ interface APIService {
         @Header("Authorization") token:String,
         @Query("accountDepartment") department: AccountsDepartment
     ):Call<GetHierarchyResponse>
+
+    @POST("/create-task/")
+    fun createTask(
+        @Header("Authorization") token:String,
+        @Body createTaskRequest: CreateTaskRequest
+    ):Call<CreateTaskResponse>
+
+    @GET("/get-tasks/")
+    fun getTasks(
+        @Header("Authorization") token:String,
+        @Query("user") user: User,
+        @Query("accountDepartment") department: AccountsDepartment
+    ):Call<GetTaskListResponse>
+
 }

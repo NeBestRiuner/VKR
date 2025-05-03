@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.toMutableStateList
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -84,7 +85,14 @@ class MainActivity : ComponentActivity() {
                         },
                         searchString = mainDepartmentViewModel.searchState,
                         filterDepartments = mainDepartmentViewModel::FilterDepartments,
-                        selectDepartment = taskManagerViewModel::changeSelectedDepartment,
+                        selectDepartment = { department ->
+                            taskManagerViewModel.changeSelectedDepartment(department)
+                            calendarViewModel.startGettingTaskList(
+                                user = authorizeViewModel.user,
+                                accountsDepartment = department,
+                                userGet =User(authorizeViewModel.user?.login ?: "","")
+                            )
+                                           },
                         onEnterDepartment = {
                             str ->
                             mainDepartmentViewModel.EnterDepartment(authorizeViewModel.user,str)
@@ -109,7 +117,10 @@ class MainActivity : ComponentActivity() {
                 }
                 composable(NavRoutes.taskManagerScreen.route){
                     TaskManagerScreen(
-                        onLeaveDepartment = {navController.popBackStack()},
+                        onLeaveDepartment = {
+                            navController.popBackStack()
+                            calendarViewModel.stopSendingRequests()
+                                            },
                         currentDepartment = taskManagerViewModel.selectedAccountsDepartment.value,
                         userList = taskManagerViewModel.employeeList,
                         onGetUserList = {
@@ -159,7 +170,25 @@ class MainActivity : ComponentActivity() {
                             )
                         },
                         lineAPIList = hierarchyViewModel.lineAPIList,
-                        taskList = calendarViewModel.taskList
+                        taskList = calendarViewModel.taskList,
+                        createdTask = calendarViewModel.createdTask,
+                        creatorUser = calendarViewModel.creator,
+                        setCreator = {
+                            calendarViewModel.setUser(authorizeViewModel.user)
+                        },
+                        createTask = {
+                            calendarViewModel.createTask(
+                                authorizeViewModel.user,
+                                taskManagerViewModel.selectedAccountsDepartment.value
+                            )
+                        },
+                        freeUserList = calendarViewModel.freeUserList,
+                        updateFreeUserList = {
+                            calendarViewModel.getUsersList(
+                                authorizeViewModel.user,
+                                taskManagerViewModel.selectedAccountsDepartment.value
+                            )
+                        }
                     )
                 }
             }

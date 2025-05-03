@@ -47,6 +47,7 @@ import org.example.project.Model.BottomNavItem
 import org.example.project.Model.Line
 import org.example.project.Model.PostRectangle
 import org.example.project.Model.Task
+import org.example.project.Model.TaskWithID
 import org.example.project.Model.User
 import org.example.project.View.Box.AnalyticBox
 import org.example.project.View.Box.BusinessProcessBox
@@ -76,7 +77,13 @@ fun TaskManagerScreen(
     getHierarchy: (isArrowed: MutableState<Boolean>, secondDot: MutableState<Int>,
                    firstDotRectangle: MutableState<PostRectangle>)->Unit,
     lineAPIList: SnapshotStateList<LineAPI>,
-    taskList: SnapshotStateList<Task>
+    taskList: SnapshotStateList<TaskWithID>,
+    createdTask: MutableState<Task>,
+    creatorUser: MutableState<User>,
+    setCreator: () -> Unit,
+    createTask: () -> Unit,
+    freeUserList: SnapshotStateList<User>,
+    updateFreeUserList: () -> Unit
 ){
     val navController = rememberNavController()
 
@@ -111,7 +118,13 @@ fun TaskManagerScreen(
                     sendHierarchy = sendHierarchy,
                     getHierarchy = getHierarchy,
                     lineAPIList = lineAPIList,
-                    taskList = taskList
+                    taskList = taskList,
+                    createdTask = createdTask,
+                    creatorUser = creatorUser,
+                    setCreator = setCreator,
+                    createTask = createTask,
+                    freeUserList = freeUserList,
+                    updateFreeUserList = updateFreeUserList
                 )
             }
         }
@@ -169,7 +182,13 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                     getHierarchy: (isArrowed: MutableState<Boolean>, secondDot: MutableState<Int>,
                                    firstDotRectangle: MutableState<PostRectangle>)->Unit,
                     lineAPIList: SnapshotStateList<LineAPI>,
-                    taskList: SnapshotStateList<Task>
+                    taskList: SnapshotStateList<TaskWithID>,
+                    createdTask: MutableState<Task>,
+                    creatorUser: MutableState<User>,
+                    setCreator: () -> Unit,
+                    createTask: () -> Unit,
+                    freeUserList: SnapshotStateList<User>,
+                    updateFreeUserList: () -> Unit
 ) {
 
     NavHost(
@@ -178,7 +197,13 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
         modifier = Modifier.fillMaxSize()
     ) {
         composable(BottomNavItem.Calendar.route) { HomeScreen(
-            taskList = taskList
+            taskList = taskList,
+            createdTask = createdTask,
+            creatorUser = creatorUser,
+            setCreator = setCreator,
+            createTask = createTask,
+            freeUserList = freeUserList,
+            updateFreeUserList = updateFreeUserList
         ) }
         composable(BottomNavItem.Hierarchy.route) { HierarchyBox(
                 postRectangleList = postRectangleList,
@@ -240,6 +265,26 @@ fun TaskManagerScreenProfile(){
         sendHierarchy = {},
         getHierarchy = {row,pow,go->},
         lineAPIList = emptyList<LineAPI>().toMutableStateList(),
-        taskList = emptyList<Task>().toMutableStateList()
+        taskList = emptyList<TaskWithID>().toMutableStateList(),
+        createdTask = mutableStateOf(
+            Task(
+                name = "",
+                description = "",
+                beginTime = "",
+                endTime = "",
+                priority = "",
+                percent = "",
+                file = ByteArray(0),
+                responsiblePersons = emptyList<User>().toMutableStateList(),
+                creatorUser = User("","")
+            )
+        ),
+        creatorUser = mutableStateOf(
+            User("","")
+        ),
+        setCreator = {},
+        createTask = {},
+        freeUserList = emptyList<User>().toMutableStateList(),
+        updateFreeUserList = {}
     )
 }

@@ -1,8 +1,7 @@
 package org.example.project.Model
 
-import androidx.compose.runtime.snapshots.SnapshotStateList
-
-data class Task(
+data class TaskWithID(
+    val id: Int,
     var name: String,
     var description: String,
     var beginTime: String,

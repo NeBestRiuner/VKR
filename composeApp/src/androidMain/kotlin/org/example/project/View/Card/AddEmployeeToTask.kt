@@ -10,11 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -27,7 +24,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -42,24 +38,25 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import org.example.project.Model.PostRectangle
 import org.example.project.Model.User
-import androidx.compose.ui.tooling.preview.Preview
 
 
 @Composable
-fun AddEmployeeToPostCard(
+fun AddEmployeeToTaskCard(
     onDismiss: ()->Unit,
-    employeeFreeList: SnapshotStateList<User>,
-    selectedPostRectangle: MutableState<PostRectangle>,
+    employeeFreeList: SnapshotStateList<User>,// список всех сотрудников
+    chooseEmployeeList: SnapshotStateList<User>, // список добавленных в задачу
+    taskEmployeeList: MutableList<User>,
     selectedUser: MutableState<User>
 ){
     var mExpanded by remember { mutableStateOf(false) }
 
-    var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
-
+    var mTextFieldSize by remember { mutableStateOf(Size.Zero) }
+    var localSelectedUser by remember { mutableStateOf(User("","")) }
     // Up Icon when expanded and down icon when collapsed
     val icon = if (mExpanded)
         Icons.Filled.KeyboardArrowUp
@@ -102,8 +99,8 @@ fun AddEmployeeToPostCard(
                 // Create an Outlined Text Field
                 // with icon and not expanded
                 OutlinedTextField(
-                    value = selectedUser.value.login,
-                    onValueChange = { selectedUser.value = User(it,"") },
+                    value = localSelectedUser.login,
+                    onValueChange = { localSelectedUser = User(it,"") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .onGloballyPositioned { coordinates ->
@@ -111,7 +108,7 @@ fun AddEmployeeToPostCard(
                             // the DropDown the same width
                             mTextFieldSize = coordinates.size.toSize()
                         },
-                    label = {Text("Бухгалтеры")},
+                    label = { Text("Бухгалтеры") },
                     trailingIcon = {
                         Icon(icon,"Текстовая строка/список с бухгалтерами",
                             Modifier.clickable { mExpanded = !mExpanded })
@@ -128,18 +125,22 @@ fun AddEmployeeToPostCard(
                         .weight(1f)
 
                 ) {
-                    employeeFreeList.forEach { label ->
+                    employeeFreeList.forEach { user ->
                         DropdownMenuItem(onClick = {
-                            selectedUser.value = User(label.login, "")
+                            localSelectedUser = user
                             mExpanded = false
                         }, text = {
-                            Text(text = label.login)
+                            Text(text = user.login)
                         }
                         )
                     }
                 }
                 Button(onClick = {
-                    selectedPostRectangle.value.employeeList.add(selectedUser.value)
+                    selectedUser.value = localSelectedUser
+                    chooseEmployeeList.add(selectedUser.value)
+                    taskEmployeeList.add(selectedUser.value)
+                    employeeFreeList.remove(selectedUser.value)
+                    println(chooseEmployeeList[0])
                     //удалить пользователя из списка
                     onDismiss.invoke()
                 },
@@ -156,13 +157,14 @@ fun AddEmployeeToPostCard(
 @SuppressLint("UnrememberedMutableState")
 @Composable
 @Preview
-fun AddEmployeeToPostCardPreview(){
+fun AddEmployeeToTaskCardPreview(){
     val empFL = emptyList<User>().toMutableStateList()
     empFL.add(User("Admin",""))
-    AddEmployeeToPostCard(
+    AddEmployeeToTaskCard(
         onDismiss = {},
         employeeFreeList = empFL,
-        selectedPostRectangle = mutableStateOf(PostRectangle()),
-        selectedUser = mutableStateOf(User("",""))
+        selectedUser = mutableStateOf(User("","")),
+        chooseEmployeeList = emptyList<User>().toMutableStateList(),
+        taskEmployeeList = emptyList<User>().toMutableList()
     )
 }
