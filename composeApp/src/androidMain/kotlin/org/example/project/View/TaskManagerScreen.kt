@@ -51,6 +51,7 @@ import org.example.project.Model.TaskWithID
 import org.example.project.Model.User
 import org.example.project.View.Box.AnalyticBox
 import org.example.project.View.Box.BusinessProcessBox
+import org.example.project.View.Box.BusinessProcessCreateBox
 import org.example.project.View.Box.HierarchyBox
 import org.example.project.View.Box.HomeScreen
 import org.example.project.View.Box.SettingsBox
@@ -218,7 +219,11 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                 lineAPIList = lineAPIList
             )
         }
-        composable(BottomNavItem.BusinessProcess.route) { BusinessProcessBox() }
+        composable(BottomNavItem.BusinessProcess.route) { BusinessProcessBox(
+            createBusinessProcess = {
+                navController.navigate(BottomNavItem.BusinessProcessCreate.route)
+            }
+        ) }
         composable(BottomNavItem.Analytic.route) { AnalyticBox() }
         composable(BottomNavItem.Settings.route) {
             SettingsBox(
@@ -230,6 +235,14 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                 createdInviteCode = createdInviteCode,
                 onCreateInviteCode = onCreateInviteCode
             ) }
+        composable(BottomNavItem.BusinessProcessCreate.route) {
+            BusinessProcessCreateBox(
+                leaveBPCreate = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
     }
 }
 

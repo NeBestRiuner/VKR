@@ -17,4 +17,6 @@ sealed class BottomNavItem(val route:String, val title: String, val icon: ImageV
     object BusinessProcess : BottomNavItem("business_process", "Бизнес-процессы", Icons.AutoMirrored.Default.List)
     object Analytic : BottomNavItem("analytic", "Аналитика", Icons.Default.Search)
     object Settings : BottomNavItem("settings", "Настройки", Icons.Default.Settings)
+    object BusinessProcessCreate : BottomNavItem("business_process_create",
+        "Создание бизнес-процесса", Icons.AutoMirrored.Default.List)
 }

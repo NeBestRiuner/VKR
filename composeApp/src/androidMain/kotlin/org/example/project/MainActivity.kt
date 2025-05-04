@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.toMutableStateList
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -172,7 +174,7 @@ class MainActivity : ComponentActivity() {
                         lineAPIList = hierarchyViewModel.lineAPIList,
                         taskList = calendarViewModel.taskList,
                         createdTask = calendarViewModel.createdTask,
-                        creatorUser = calendarViewModel.creator,
+                        creatorUser = remember{mutableStateOf(User(authorizeViewModel.user?.login ?: "",""))},
                         setCreator = {
                             calendarViewModel.setUser(authorizeViewModel.user)
                         },
