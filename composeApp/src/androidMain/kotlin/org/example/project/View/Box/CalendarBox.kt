@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import okhttp3.internal.toImmutableList
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.BottomNavItem
 import org.example.project.Model.Enums.RusMonth
@@ -45,6 +46,7 @@ import org.example.project.Model.Task
 import org.example.project.Model.TaskWithID
 import org.example.project.Model.User
 import org.example.project.View.Card.CreateTaskCard
+import org.example.project.View.Card.ShowTaskCard
 import org.example.project.View.Item.TaskItemRow
 import org.example.project.View.Table.CustomCalendar
 import org.example.project.View.Table.DepartmentTableItem
@@ -69,10 +71,14 @@ fun HomeScreen(
     val selectedType = remember{ mutableStateOf("Calendar") }
     val selectedData = remember{ mutableStateOf("Month") }
     val showCreateTask = remember{ mutableStateOf(false) }
+    val showShowTask = remember { mutableStateOf(false) }
     val month = remember { mutableStateOf( Calendar.getInstance().get(Calendar.MONTH) + 1) }
     val year = remember { mutableStateOf(Calendar.getInstance().get(Calendar.YEAR)) }
     val day = remember { mutableStateOf(Calendar.getInstance().get(Calendar.DAY_OF_MONTH)) }
     val currentUser = remember { mutableStateOf(creatorUser.value) }
+    val selectedTask = remember { mutableStateOf(TaskWithID(
+        0,"","","","","","", ByteArray(0), emptyList<User>().toMutableList(),User("","")
+    )) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize(),
@@ -245,7 +251,7 @@ fun HomeScreen(
                                     if(resp.login == currentUser.value.login) employees = true
                                 }
                                 if(employees) {
-                                    TaskItemRow(task)
+                                    TaskItemRow(task, showShowTask, selectedTask)
                                 }
 
                             }
@@ -263,12 +269,14 @@ fun HomeScreen(
                          if(resp.login == currentUser.value.login) employees = true
                         }
                         if(employees) {
-                            TaskItemRow(task)
+                            TaskItemRow(task, showShowTask, selectedTask)
                         }
                     }
                 }
             }
-            Button(onClick = {
+            Button(
+                modifier = Modifier.padding(10.dp),
+                onClick = {
                 showCreateTask.value = true
             }){
                 Text("Создать задачу")
@@ -285,6 +293,16 @@ fun HomeScreen(
                 createTask = createTask,
                 freeUserList = freeUserList,
                 updateFreeUserList = updateFreeUserList
+            )
+        }
+        if(showShowTask.value){
+            ShowTaskCard(
+                onDismiss = {
+                    showShowTask.value = false
+                },
+                task = selectedTask.value,
+                updateTask = {},
+                sendMessage = {TaskWithID,message -> }
             )
         }
     }

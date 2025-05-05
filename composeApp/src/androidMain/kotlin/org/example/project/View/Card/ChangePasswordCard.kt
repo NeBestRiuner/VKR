@@ -51,7 +51,7 @@ fun ChangePasswordCard(
             modifier = Modifier
                 .align(Alignment.Center)
                 .width(300.dp)
-                .clickable { } // предотвращает закрытие при клике на карточку
+                .clickable(enabled = false) { } // предотвращает закрытие при клике на карточку
         ) {
             Row(
                 verticalAlignment = Alignment.Top,

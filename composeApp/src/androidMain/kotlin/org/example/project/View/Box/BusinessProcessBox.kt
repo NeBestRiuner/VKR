@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.Model.BottomNavItem
+import org.example.project.View.Table.BusinessProcessTable
 
 @Composable
 fun BusinessProcessBox(
@@ -32,9 +33,9 @@ fun BusinessProcessBox(
                     fontWeight = FontWeight.Bold
                 )
             )
-            LazyColumn(modifier = Modifier.weight(1f)) {
-
-            }
+            BusinessProcessTable(
+                modifier = Modifier.weight(1f)
+            )
             Button(
                 modifier = Modifier.padding(10.dp),
                 onClick = createBusinessProcess
