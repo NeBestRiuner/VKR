@@ -84,8 +84,10 @@ fun CreateTaskCard(
     val taskName = remember { mutableStateOf("") }
     val selectedUser = remember { mutableStateOf(User("","")) }
     val showAddEmployee = remember { mutableStateOf(false) }
-    val selectedCycle = remember { mutableStateOf("No") }
+    val selectedCycleType = remember { mutableStateOf("none") }
+    val selectedCycleDuration = remember { mutableStateOf("") }
     val taskDescription = remember { mutableStateOf("") }
+    val showDurationCard = remember { mutableStateOf(false) }
 
     var selectedDate by remember { mutableStateOf(Calendar.getInstance()) }
     var priority = remember{ mutableStateOf(5) }
@@ -162,7 +164,9 @@ fun CreateTaskCard(
             login = creatorUser.value.login,
             password = ""
         ),
-        completed = false
+        completed = false,
+        cycleType = selectedCycleType.value,
+        cycleDuration = selectedCycleDuration.value
     )
 
     Box(
@@ -216,7 +220,11 @@ fun CreateTaskCard(
                     updateFreeUserList = updateFreeUserList
                 )
                 Text(modifier = Modifier.padding(10.dp), text = "Цикличность")
-                CycleRow(selectedCycle)
+                CycleRow(
+                    selectedCycleType,
+                    selectedCycleDuration,
+                    showDurationCard
+                )
                 Text(modifier = Modifier.padding(10.dp), text = "Приоритет")
                 PriorityRow(priority = priority)
                 Text(modifier = Modifier.padding(10.dp), text = "Время начала и заверешения")
@@ -277,6 +285,13 @@ fun CreateTaskCard(
                     taskEmployeeList = createdTask.value.responsiblePersons
             )
         }
+        if(showDurationCard.value){
+            ShowDurationTaskCard(
+                selectedCycleDuration = selectedCycleDuration,
+                selectedCycleType = selectedCycleType,
+                showDurationCard = showDurationCard
+            )
+        }
     }
 }
 
@@ -311,41 +326,45 @@ fun EmployeesAvatar(employee: User){
 
 @Composable
 fun CycleRow(
-    selectedCycle: MutableState<String>
+    selectedCycleType: MutableState<String>,
+    selectedCycleDuration: MutableState<String>,
+    showDurationCard: MutableState<Boolean>
 ){
     Row(modifier = Modifier.fillMaxWidth()){
         IconToggleButton(
             modifier = Modifier.weight(1.0f),
-            checked = selectedCycle.value == "No",
+            checked = selectedCycleType.value == "none",
             onCheckedChange = {
-                selectedCycle.value = "No"
+                selectedCycleType.value = "none"
             }
         ) {
             Text("Нет")
         }
         IconToggleButton(
             modifier = Modifier.weight(1.0f),
-            checked = selectedCycle.value == "Weekly",
+            checked = selectedCycleDuration.value == "7" && selectedCycleType.value == "periodic",
             onCheckedChange = {
-                selectedCycle.value = "Weekly"
+                selectedCycleType.value = "periodic"
+                selectedCycleDuration.value = "7"
             }
         ) {
             Text("Неделя")
         }
         IconToggleButton(
             modifier = Modifier.weight(1.0f),
-            checked = selectedCycle.value == "Monthly",
+            checked = selectedCycleDuration.value == "28" && selectedCycleType.value == "periodic",
             onCheckedChange = {
-                selectedCycle.value = "Monthly"
+                selectedCycleType.value = "periodic"
+                selectedCycleDuration.value = "28"
             }
         ) {
             Text("Месяц")
         }
         IconToggleButton(
             modifier = Modifier.weight(1.0f),
-            checked = selectedCycle.value == "Other",
+            checked = showDurationCard.value,
             onCheckedChange = {
-                selectedCycle.value = "Other"
+                showDurationCard.value = true
             }
         ) {
             Text("Другое")
@@ -405,7 +424,9 @@ fun CreateTaskCardPreview(){
                 file = ByteArray(0),
                 responsiblePersons = emptyList<User>().toMutableStateList(),
                 creatorUser = User("",""),
-                completed = false
+                completed = false,
+                cycleType = "none",
+                cycleDuration = ""
             )
         ),
         creatorUser = mutableStateOf(

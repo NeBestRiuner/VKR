@@ -8,6 +8,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.example.project.API.Data.CreateTaskRequest
 import org.example.project.API.Data.CreateTaskResponse
+import org.example.project.API.Data.GetMessageListRequest
+import org.example.project.API.Data.GetMessageListResponse
 import org.example.project.API.Data.GetTaskListResponse
 import org.example.project.API.Data.GetUsersListResponse
 import org.example.project.API.Data.SendMessageRequest
@@ -43,7 +45,9 @@ class CalendarViewModel() : ViewModel(){
             file = ByteArray(0),
             responsiblePersons = emptyList<User>().toMutableList(),
             creatorUser = User("",""),
-            completed = false
+            completed = false,
+            cycleType = "none",
+            cycleDuration = ""
         )
     )
     var sendMessage = mutableStateOf(Message("", ByteArray(0),""))
@@ -52,9 +56,12 @@ class CalendarViewModel() : ViewModel(){
 
     private var timer: Timer? = null
     private var job: Job? = null
+    private var timerM: Timer? = null
+    private var jobM: Job? = null
 
     // Флаг для отслеживания состояния
     private val isSending = mutableStateOf(false)
+    private val isSendingM = mutableStateOf(false)
 
     fun setUser(user: UserSession?){
         if (user != null) {
@@ -227,5 +234,58 @@ class CalendarViewModel() : ViewModel(){
                 // Обработка ошибки сети
             }
         })
+    }
+    fun getMessageList(user: UserSession?, accountsDepartment: AccountsDepartment,
+                       taskWithID: TaskWithID
+    ){
+        val token = user?.token
+        val call = apiService.getMessageList("Bearer $token",
+            getMessageListRequest = GetMessageListRequest(
+                accountsDepartment = accountsDepartment,
+                taskWithID = taskWithID
+            )
+        )
+
+        call.enqueue(object : Callback<GetMessageListResponse> {
+            override fun onResponse(call: Call<GetMessageListResponse>, response: Response<GetMessageListResponse>) {
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    if (result != null) {
+                        if(result.status=="200"){
+                            messageList.removeAll(messageList)
+                            messageList.addAll(result.messageWUList)
+                        }
+                    }
+                    // Обработка успешного ответа
+                } else {
+                    // Обработка ошибки
+                }
+            }
+
+            override fun onFailure(call: Call<GetMessageListResponse>, t: Throwable) {
+                // Обработка ошибки сети
+            }
+        })
+    }
+    fun startGettingMessageList(user: UserSession?, accountsDepartment: AccountsDepartment, taskWithID: TaskWithID){
+        if (isSendingM.value) return // Уже отправляем
+
+        isSendingM.value = true
+        jobM = viewModelScope.launch {
+            timerM = timer(daemon = true, initialDelay = 0, period = 2000) {
+                viewModelScope.launch {
+                    try {
+                        getMessageList(user,accountsDepartment,taskWithID)
+                    } catch (e: Exception) {
+                        // Обработка ошибок
+                    }
+                }
+            }
+        }
+    }
+    fun stopGettingMessages() {
+        timerM?.cancel()
+        jobM?.cancel()
+        isSendingM.value = false
     }
 }

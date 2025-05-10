@@ -1,5 +1,7 @@
 package org.example.project.API
 
+import org.example.project.API.Data.CreateBusinessProcessRequest
+import org.example.project.API.Data.CreateBusinessProcessResponse
 import org.example.project.API.Data.CreateDepartmentRequest
 import org.example.project.API.Data.CreateDepartmentResponse
 import org.example.project.API.Data.CreateInviteCodeResponse
@@ -8,8 +10,11 @@ import org.example.project.API.Data.CreateTaskResponse
 import org.example.project.API.Data.CreateUserResponse
 import org.example.project.API.Data.EnterDepartmentTokenResponse
 import org.example.project.API.Data.GetAllUsersResponse
+import org.example.project.API.Data.GetBusinessProcessResponse
 import org.example.project.API.Data.GetDepartmentListResponse
 import org.example.project.API.Data.GetHierarchyResponse
+import org.example.project.API.Data.GetMessageListRequest
+import org.example.project.API.Data.GetMessageListResponse
 import org.example.project.API.Data.GetPermissionResponse
 import org.example.project.API.Data.GetProfileInfoResponse
 import org.example.project.API.Data.GetTaskListResponse
@@ -119,4 +124,20 @@ interface APIService {
         @Body sendMessageRequest: SendMessageRequest
     ):Call<SendMessageResponse>
 
+    @POST("/get-message-list/")
+    fun getMessageList(
+        @Header("Authorization") token:String,
+        @Body getMessageListRequest: GetMessageListRequest
+    ):Call<GetMessageListResponse>
+
+    @POST("/create-business-process/")
+    fun sendCreateBusinessProcess(
+        @Header("Authorization") token:String,
+        @Body createBusinessProcessRequest: CreateBusinessProcessRequest
+    ):Call<CreateBusinessProcessResponse>
+    @GET("/get-business-process-list/")
+    fun getBusinessProcessList(
+        @Header("Authorization") token:String,
+        @Query("accountDepartment") department: AccountsDepartment
+    ):Call<GetBusinessProcessResponse>
 }

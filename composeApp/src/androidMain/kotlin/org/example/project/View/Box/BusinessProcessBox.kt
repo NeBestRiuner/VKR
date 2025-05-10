@@ -8,7 +8,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
@@ -19,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.example.project.Model.BPTask
 import org.example.project.Model.BottomNavItem
 import org.example.project.Model.BusinessProcess
 import org.example.project.View.Table.BusinessProcessTable
@@ -26,7 +29,9 @@ import org.example.project.View.Table.BusinessProcessTable
 @Composable
 fun BusinessProcessBox(
     createBusinessProcess: ()->Unit,
-    businessProcessList: SnapshotStateList<BusinessProcess>
+    businessProcessList: SnapshotStateList<BusinessProcess>,
+    editBusinessProcess: ()->Unit,
+    selectedBusinessProcess: MutableState<BusinessProcess>
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize(),
@@ -41,7 +46,9 @@ fun BusinessProcessBox(
             )
             BusinessProcessTable(
                 modifier = Modifier.weight(1f),
-                businessProcessList = businessProcessList
+                businessProcessList = businessProcessList,
+                editBusinessProcess = editBusinessProcess,
+                selectedBusinessProcess = selectedBusinessProcess
             )
             Button(
                 modifier = Modifier.padding(10.dp),
@@ -67,9 +74,23 @@ fun BusinessProcessBoxPreview(){
         createBusinessProcess = {},
         businessProcessList = remember{ mutableStateListOf(
             BusinessProcess(
-                name = "Новый БП"
+                id = 0,
+                name = "Новый БП",
+                completed = false,
+                bpTaskList = emptyList<BPTask>().toMutableList()
             )
         )
+        },
+        editBusinessProcess = {},
+        selectedBusinessProcess = remember {
+            mutableStateOf(
+                BusinessProcess(
+                    id = 0,
+                    name = "Новый БП",
+                    completed = false,
+                    bpTaskList = emptyList<BPTask>().toMutableList()
+                )
+            )
         }
     )
 }

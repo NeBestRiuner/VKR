@@ -16,4 +16,6 @@ object TaskTable: IdTable<Int>("task") {
     val percent = float("percent")
     val file = binary("file")
     val completed = bool("completed")
+    val cycleType = text("cycled_type")
+    val cycleDuration = text("cycle_duration")
 }

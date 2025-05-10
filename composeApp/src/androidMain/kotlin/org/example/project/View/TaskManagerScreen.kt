@@ -45,6 +45,7 @@ import androidx.navigation.compose.rememberNavController
 import org.example.project.API.Data.LineAPI
 import org.example.project.API.Data.PostRectangleAPI
 import org.example.project.Model.AccountsDepartment
+import org.example.project.Model.BPTask
 import org.example.project.Model.BottomNavItem
 import org.example.project.Model.BusinessProcess
 import org.example.project.Model.Line
@@ -57,6 +58,7 @@ import org.example.project.Model.User
 import org.example.project.View.Box.AnalyticBox
 import org.example.project.View.Box.BusinessProcessBox
 import org.example.project.View.Box.BusinessProcessCreateBox
+import org.example.project.View.Box.BusinessProcessEditBox
 import org.example.project.View.Box.HierarchyBox
 import org.example.project.View.Box.HomeScreen
 import org.example.project.View.Box.SettingsBox
@@ -95,6 +97,13 @@ fun TaskManagerScreen(
     message: MutableState<Message>,
     messageList: SnapshotStateList<MessageWithUser>,
     sendMessage: (TaskWithID, String) -> Unit,
+    startGetMessage: (TaskWithID) -> Unit,
+    stopGetMessage: () -> Unit,
+    bpMutableState: MutableState<BusinessProcess>,
+    sendCreateBusinessProcess: () -> Unit,
+    getBusinessProcess: () -> Unit,
+    selectedBusinessProcess: MutableState<BusinessProcess>,
+
 ){
     val navController = rememberNavController()
 
@@ -140,7 +149,13 @@ fun TaskManagerScreen(
                     updateTask = updateTask,
                     message = message,
                     messageList = messageList,
-                    sendMessage = sendMessage
+                    sendMessage = sendMessage,
+                    startGetMessage = startGetMessage,
+                    stopGetMessage = stopGetMessage,
+                    bpMutableState = bpMutableState,
+                    sendCreateBusinessProcess = sendCreateBusinessProcess,
+                    getBusinessProcess = getBusinessProcess,
+                    selectedBusinessProcess = selectedBusinessProcess
                 )
             }
         }
@@ -153,7 +168,7 @@ fun BottomNavigationBar(navController: NavController) {
         BottomNavItem.Calendar,
         BottomNavItem.Hierarchy,
         BottomNavItem.BusinessProcess,
-        BottomNavItem.Analytic,
+      //  BottomNavItem.Analytic,
         BottomNavItem.Settings
     )
 
@@ -210,6 +225,12 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                     message: MutableState<Message>,
                     messageList: SnapshotStateList<MessageWithUser>,
                     sendMessage: (TaskWithID, String) -> Unit,
+                    startGetMessage: (TaskWithID) -> Unit,
+                    stopGetMessage: () -> Unit,
+                    bpMutableState: MutableState<BusinessProcess>,
+                    sendCreateBusinessProcess: () -> Unit,
+                    getBusinessProcess: () -> Unit,
+                    selectedBusinessProcess: MutableState<BusinessProcess>
 ) {
 
     NavHost(
@@ -228,9 +249,16 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
             updateTask = updateTask,
             message = message,
             messageList = messageList,
-            sendMessage = sendMessage
+            sendMessage = sendMessage,
+            startGetMessage = startGetMessage,
+            stopGetMessage = stopGetMessage
         ) }
-        composable(BottomNavItem.Hierarchy.route) { HierarchyBox(
+        composable(BottomNavItem.Hierarchy.route) {
+            var isArrowed = remember { mutableStateOf(false) }
+            var secondDot = remember { mutableStateOf(0) }
+            var firstDotRectangle =  remember { mutableStateOf(PostRectangle()) }
+            getHierarchy.invoke(isArrowed,secondDot,firstDotRectangle)
+            HierarchyBox(
                 postRectangleList = postRectangleList,
                 selectedEmployee = selectedEmployee,
                 employeeFreeList = employeeFreeList,
@@ -240,15 +268,25 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                 postRectangleListAPI = postRectangleListAPI,
                 sendHierarchy = sendHierarchy,
                 getHierarchy = getHierarchy,
-                lineAPIList = lineAPIList
+                lineAPIList = lineAPIList,
+                isArrowed = isArrowed,
+                secondDot = secondDot,
+                firstDotRectangle = firstDotRectangle
             )
         }
-        composable(BottomNavItem.BusinessProcess.route) { BusinessProcessBox(
-            createBusinessProcess = {
-                navController.navigate(BottomNavItem.BusinessProcessCreate.route)
-            },
-            businessProcessList = businessProcessList
-        ) }
+        composable(BottomNavItem.BusinessProcess.route) {
+            getBusinessProcess.invoke()
+            BusinessProcessBox(
+                createBusinessProcess = {
+                    navController.navigate(BottomNavItem.BusinessProcessCreate.route)
+                },
+                businessProcessList = businessProcessList,
+                editBusinessProcess = {
+                    navController.navigate(BottomNavItem.BusinessProcessEdit.route)
+                },
+                selectedBusinessProcess = selectedBusinessProcess
+            )
+        }
         composable(BottomNavItem.Analytic.route) { AnalyticBox() }
         composable(BottomNavItem.Settings.route) {
             SettingsBox(
@@ -264,7 +302,19 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
             BusinessProcessCreateBox(
                 leaveBPCreate = {
                     navController.popBackStack()
-                }
+                },
+                bpMutableState = bpMutableState,
+                sendCreateBusinessProcess = sendCreateBusinessProcess
+            )
+        }
+        composable(BottomNavItem.BusinessProcessEdit.route){
+            BusinessProcessEditBox(
+                leaveBPEdit = {
+                    navController.popBackStack()
+                },
+                selectedBusinessProcess = selectedBusinessProcess,
+                postRectangleAPIList = postRectangleListAPI,
+                businessProcessList = businessProcessList
             )
         }
 
@@ -315,7 +365,9 @@ fun TaskManagerScreenProfile(){
                 file = ByteArray(0),
                 responsiblePersons = emptyList<User>().toMutableStateList(),
                 creatorUser = User("",""),
-                completed = false
+                completed = false,
+                cycleType = "none",
+                cycleDuration = ""
             )
         ),
         creatorUser = mutableStateOf(
@@ -327,12 +379,39 @@ fun TaskManagerScreenProfile(){
         updateFreeUserList = {},
         businessProcessList = mutableStateListOf(
             BusinessProcess(
-                name = "Новый БП"
+                id = 0,
+                name = "Новый БП",
+                completed = false,
+                bpTaskList = emptyList<BPTask>().toMutableList()
             )
         ),
         updateTask = {taskWithID ->  },
         message = remember { mutableStateOf(Message("",ByteArray(0),"")) },
         messageList = emptyList<MessageWithUser>().toMutableStateList(),
-        sendMessage = {taskWithID, str ->  }
+        sendMessage = {taskWithID, str ->  },
+        startGetMessage = {taskWithID ->  },
+        stopGetMessage = {},
+        bpMutableState = remember {
+            mutableStateOf(
+                BusinessProcess(
+                    id = 0,
+                    name = "Новый БП",
+                    completed = false,
+                    bpTaskList = emptyList<BPTask>().toMutableList()
+                )
+            )
+        },
+        sendCreateBusinessProcess = {},
+        getBusinessProcess = {},
+        selectedBusinessProcess = remember {
+            mutableStateOf(
+                BusinessProcess(
+                    id = 0,
+                    name = "Новый БП",
+                    completed = false,
+                    bpTaskList = emptyList<BPTask>().toMutableList()
+                )
+            )
+        }
     )
 }

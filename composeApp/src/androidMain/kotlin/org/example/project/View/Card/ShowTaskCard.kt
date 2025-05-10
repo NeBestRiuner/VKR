@@ -1,5 +1,6 @@
 package org.example.project.View.Card
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -384,7 +385,7 @@ fun ShowTaskCardPreview(){
                 Message(text="",ByteArray(0),"08 03 2025 14:58")
             )
         },
-        messageList = mutableStateListOf(
+        messageList = remember { mutableStateListOf(
             MessageWithUser(
                 file = ByteArray(0),
                 text = "Новое сообщение",
@@ -392,5 +393,6 @@ fun ShowTaskCardPreview(){
                 createDate = "10 May 2025 08:41"
             )
         )
+        }
     )
 }

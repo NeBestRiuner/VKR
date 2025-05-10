@@ -67,14 +67,15 @@ fun HierarchyBox(postRectangleList: SnapshotStateList<PostRectangle>,
                  sendHierarchy:()->Unit,
                  getHierarchy:(MutableState<Boolean>, MutableState<Int>,
                                MutableState<PostRectangle>)->Unit,
-                 lineAPIList: SnapshotStateList<LineAPI>
+                 lineAPIList: SnapshotStateList<LineAPI>,
+                 isArrowed: MutableState<Boolean>,
+                 secondDot: MutableState<Int>,
+                 firstDotRectangle: MutableState<PostRectangle>
 ) {
     var showAddPostCard = remember { mutableStateOf(false) }
-    var isArrowed = remember { mutableStateOf(false) }
-    var secondDot = remember { mutableStateOf(0) }
-    var firstDotRectangle =  remember { mutableStateOf(PostRectangle()) }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        getHierarchy.invoke(isArrowed,secondDot,firstDotRectangle)
+
         Column(Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,) {
             Text("Иерархия бухгалтерии")
@@ -219,6 +220,9 @@ fun HierarchyBox(postRectangleList: SnapshotStateList<PostRectangle>,
 @Preview
 @Composable
 fun HierarchyBoxPreview(){
+    var isArrowed = remember { mutableStateOf(false) }
+    var secondDot = remember { mutableStateOf(0) }
+    var firstDotRectangle =  remember { mutableStateOf(PostRectangle()) }
     HierarchyBox(
         postRectangleList = emptyList<PostRectangle>().toMutableStateList(),
         employeeFreeList = emptyList<User>().toMutableStateList(),
@@ -232,7 +236,10 @@ fun HierarchyBoxPreview(){
         postRectangleListAPI = emptyList<PostRectangleAPI>().toMutableStateList(),
         sendHierarchy = {},
         getHierarchy = {row,pow,go->},
-        lineAPIList = emptyList<LineAPI>().toMutableStateList()
+        lineAPIList = emptyList<LineAPI>().toMutableStateList(),
+        isArrowed = isArrowed,
+        secondDot = secondDot,
+        firstDotRectangle = firstDotRectangle,
     )
 }
 

@@ -73,6 +73,8 @@ fun HomeScreen(
     message: MutableState<Message>,
     messageList: SnapshotStateList<MessageWithUser>,
     sendMessage: (TaskWithID, String) -> Unit,
+    startGetMessage: (TaskWithID) -> Unit,
+    stopGetMessage: () -> Unit
 ) {
     val selectedType = remember{ mutableStateOf("Calendar") }
     val selectedData = remember{ mutableStateOf("Month") }
@@ -303,9 +305,11 @@ fun HomeScreen(
             )
         }
         if(showShowTask.value){
+            startGetMessage(selectedTask.value)
             ShowTaskCard(
                 onDismiss = {
                     showShowTask.value = false
+                    stopGetMessage()
                 },
                 task = selectedTask.value,
                 updateTask = updateTask,
@@ -335,7 +339,9 @@ fun HomeScreenPreview() {
                 file = ByteArray(0),
                 responsiblePersons = emptyList<User>().toMutableStateList(),
                 creatorUser = User("",""),
-                completed = false
+                completed = false,
+                cycleType = "none",
+                cycleDuration = ""
             )
         ),
         creatorUser = mutableStateOf(
@@ -348,7 +354,9 @@ fun HomeScreenPreview() {
         updateTask = {taskWithID ->  },
         message = remember { mutableStateOf(Message("", ByteArray(0),"")) },
         messageList = emptyList<MessageWithUser>().toMutableStateList(),
-        sendMessage = {taskWithID, str ->  }
+        sendMessage = {taskWithID, str ->  },
+        startGetMessage = {taskWithID -> },
+        stopGetMessage = {}
     )
 }
 // Сначала преобразуем строковые даты в удобный для сравнения формат

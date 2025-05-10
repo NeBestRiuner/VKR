@@ -13,21 +13,28 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import org.example.project.Model.BPTask
 import org.example.project.Model.BottomNavItem
 import org.example.project.Model.BusinessProcess
 
 
 @Composable
 fun BusinessProcessItemRow(
-    businessProcess: BusinessProcess
+    modifier:Modifier = Modifier,
+    businessProcess: BusinessProcess,
+    editBusinessProcess: ()->Unit,
+    selectedBusinessProcess: MutableState<BusinessProcess>
 ){
     Row(
-        modifier = Modifier.fillMaxWidth().
+        modifier = modifier.
         background(color = Color(0xFFF5FFFA), shape = RoundedCornerShape(2f)),
         verticalAlignment = Alignment.CenterVertically
     ){
@@ -39,7 +46,8 @@ fun BusinessProcessItemRow(
         IconButton(
             modifier = Modifier.weight(1f),
             onClick = {
-
+                selectedBusinessProcess.value = businessProcess
+                editBusinessProcess.invoke()
             }
         ) {
             Icon(
@@ -66,7 +74,22 @@ fun BusinessProcessItemRow(
 fun BusinessProcessItemRowPreview(){
     BusinessProcessItemRow(
         businessProcess = BusinessProcess(
-            name = "Новый БП"
-        )
+            id = 0,
+            name = "Новый БП",
+            completed = false,
+            bpTaskList = emptyList<BPTask>().toMutableList()
+        ),
+        editBusinessProcess = {},
+        selectedBusinessProcess = remember {
+            mutableStateOf(
+                BusinessProcess(
+                    id = 0,
+                    name = "Новый БП",
+                    completed = false,
+                    bpTaskList = emptyList<BPTask>().toMutableList()
+                )
+            )
+        },
+
     )
 }

@@ -15,6 +15,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.example.project.API.AccountsDepartmentAPI
 import org.example.project.API.CreateAccountDepartmentResponse
+import org.example.project.API.CreateBusinessProcessRequest
+import org.example.project.API.CreateBusinessProcessResponse
 import org.example.project.API.CreateInviteCodeResponse
 import org.example.project.API.CreateUserResponse
 import org.example.project.API.EnterDepartmentTokenResponse
@@ -56,16 +58,24 @@ import java.net.URLDecoder
 import java.time.Instant.now
 import org.example.project.API.CreateTaskRequest
 import org.example.project.API.CreateTaskResponse
+import org.example.project.API.GetBusinessProcessResponse
 import org.example.project.API.GetHierarchyResponse
+import org.example.project.API.GetMessageListRequest
+import org.example.project.API.GetMessageListResponse
 import org.example.project.API.GetTaskListResponse
 import org.example.project.API.LineAPI
 import org.example.project.API.PostRectangleAPI
 import org.example.project.API.SendMessageRequest
 import org.example.project.API.UpdateTaskRequest
 import org.example.project.API.UpdateTaskResponse
+import org.example.project.model.BPTask
+import org.example.project.model.BusinessProcess
 import org.example.project.model.Bytes
+import org.example.project.model.MessageWithUser
 import org.example.project.model.Task
 import org.example.project.model.TaskWithId
+import org.example.project.tables.BusinessProcessTable
+import org.example.project.tables.BusinessProcessTaskTable
 import org.example.project.tables.EmployeeTaskTable
 import org.example.project.tables.TaskMessageTable
 import org.example.project.tables.TaskTable
@@ -695,6 +705,9 @@ fun Application.module() {
                             it[TaskTable.percent] = sentTask.percent.toFloat()
                             it[TaskTable.priority] = sentTask.priority.toInt()
                             it[TaskTable.creatorId] = creatorIdList[0].value
+                            it[TaskTable.completed] = sentTask.completed
+                            it[TaskTable.cycleDuration] = sentTask.cycleDuration
+                            it[TaskTable.cycleType] = sentTask.cycleType
                         }
 
                         val responsibleEmployeeIdList = emptyList<Int>().toMutableList()
@@ -971,8 +984,181 @@ fun Application.module() {
                     call.respond(UpdateTaskResponse("500","Не удалось обновить данные"))
                 }
             }
-            get("/get-message-list/"){
+            post("/get-message-list/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
 
+                val getMessageListRequest = call.receive<GetMessageListRequest>()
+
+                val task = getMessageListRequest.taskWithID
+                val sentAccountsDepartment = getMessageListRequest.accountsDepartment
+
+                var result:String? = null
+                var messageList  = emptyList<MessageWithUser>()
+                transaction{
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sentAccountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sentAccountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+
+                    val uId = UserTable.selectAll().where {
+                        UserTable.login eq loginSecret.toString()
+                    }.map{
+                            row ->
+                        row[UserTable.id]
+                    }
+
+                    if(creatorIdList.isNotEmpty()){
+                        messageList = TaskMessageTable.selectAll().where{
+                            (TaskMessageTable.taskId eq task.id)
+                        }.map{
+                            row ->
+                                MessageWithUser(
+                                    text = row[TaskMessageTable.text],
+                                    file = row[TaskMessageTable.file],
+                                    createDate = row[TaskMessageTable.createDate],
+                                    user = UserTable.selectAll().where{
+                                        UserTable.id eq row[TaskMessageTable.userId]
+                                    }.map{
+                                        rowL ->
+                                            rowL[UserTable.login]
+                                    }[0]
+                                )
+                        }
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="200"){
+                    call.respond(GetMessageListResponse("200","Запрос успешно выполнен",messageList))
+                }else{
+                    call.respond(GetMessageListResponse("500","Не удалось обновить данные",messageList))
+                }
+            }
+            post("/create-business-process/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+
+                val createBusinessProcessRequest = call.receive<CreateBusinessProcessRequest>()
+
+                val sentAccountsDepartment = createBusinessProcessRequest.accountsDepartment
+                val businessProcess = createBusinessProcessRequest.businessProcess
+
+                var result:String? = null
+
+                transaction{
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sentAccountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sentAccountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+
+                    val uId = UserTable.selectAll().where {
+                        UserTable.login eq loginSecret.toString()
+                    }.map{
+                            row ->
+                        row[UserTable.id]
+                    }
+
+                    if(creatorIdList.isNotEmpty()){
+                        BusinessProcessTable.insert{
+                            it[name] = businessProcess.name
+                            it[completed] = false
+                            it[departmentId] = departmentIdList[0]
+                        }
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="200"){
+                    call.respond(CreateBusinessProcessResponse("200","Запрос успешно выполнен"))
+                }else{
+                    call.respond(CreateBusinessProcessResponse("500","Не удалось обновить данные"))
+                }
+            }
+            get("/get-business-process-list/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+                val accountDepartmentJSON: String? = call.request.queryParameters["accountDepartment"]
+                val selectedAccountDepartment = parseAccountsDepartmentFromQuery(
+                    accountDepartmentJSON.toString()
+                )
+
+                var result:String? = null
+                var businessProcessListG = emptyList<BusinessProcess>().toMutableList()
+                transaction {
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq selectedAccountDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq selectedAccountDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){ // юзер-создатель, тот для кого ищём таски
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+                    var taskList = emptyList<BusinessProcess>()
+                    if(creatorIdList.isNotEmpty()
+                    ){
+                        taskList = BusinessProcessTable.selectAll().where{
+                            BusinessProcessTable.departmentId eq departmentIdList[0]
+                        }.map{
+                            row ->
+                                BusinessProcess(
+                                    id = row[BusinessProcessTable.id].value,
+                                    name = row[BusinessProcessTable.name],
+                                    completed = row[BusinessProcessTable.completed],
+                                    emptyList<BPTask>().toMutableList()
+                                )
+                        }
+                        businessProcessListG = taskList.toMutableList()
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result!=null){
+                    call.respond(GetBusinessProcessResponse(status = "200", description = "Успешно выполнен запрос",
+                        businessProcessListG
+                    ))
+                }else{
+                    call.respond(GetBusinessProcessResponse(status = "500", description = "Ошибка сервера",
+                        businessProcessListG
+                    ))
+                }
             }
         }
     }

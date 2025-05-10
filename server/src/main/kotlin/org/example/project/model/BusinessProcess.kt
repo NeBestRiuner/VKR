@@ -1,4 +1,8 @@
-package org.example.project.Model
+package org.example.project.model
+
+import kotlinx.serialization.Serializable
+
+@Serializable
 
 data class BusinessProcess(
     val id: Int,

@@ -12,5 +12,7 @@ data class Task(
     var file: ByteArray,
     var responsiblePersons: MutableList<User>,
     var creatorUser: User,
-    var completed: Boolean
+    var completed: Boolean,
+    var cycleType: String,
+    var cycleDuration: String
 )

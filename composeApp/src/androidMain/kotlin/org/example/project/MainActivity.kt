@@ -211,7 +211,30 @@ class MainActivity : ComponentActivity() {
                                 taskManagerViewModel.selectedAccountsDepartment.value,
                                 taskWithID
                             )
-                        }
+                        },
+                        startGetMessage = {
+                            taskWithID ->
+                                calendarViewModel.startGettingMessageList(
+                                    user = authorizeViewModel.user,
+                                    accountsDepartment = taskManagerViewModel.selectedAccountsDepartment.value,
+                                    taskWithID = taskWithID
+                                )
+                        },
+                        stopGetMessage = {calendarViewModel.stopGettingMessages()},
+                        bpMutableState = businessProcessViewModel.createdBusinessProcess,
+                        sendCreateBusinessProcess = {
+                            businessProcessViewModel.createBusinessProcess(
+                                user = authorizeViewModel.user,
+                                accountsDepartment = taskManagerViewModel.selectedAccountsDepartment.value
+                            )
+                        },
+                        getBusinessProcess = {
+                            businessProcessViewModel.getBusinessProcessList(
+                                user = authorizeViewModel.user,
+                                accountsDepartment = taskManagerViewModel.selectedAccountsDepartment.value
+                            )
+                        },
+                        selectedBusinessProcess = businessProcessViewModel.selectedBusinessProcess
                     )
                 }
             }
