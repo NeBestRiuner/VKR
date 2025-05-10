@@ -17,7 +17,11 @@ import org.example.project.API.Data.GetUsersListResponse
 import org.example.project.API.Data.LoginUserResponse
 import org.example.project.API.Data.SendHierarchyRequest
 import org.example.project.API.Data.SendHierarchyResponse
+import org.example.project.API.Data.SendMessageRequest
+import org.example.project.API.Data.SendMessageResponse
 import org.example.project.API.Data.UpdateProfileInfoRequest
+import org.example.project.API.Data.UpdateTaskRequest
+import org.example.project.API.Data.UpdateTaskResponse
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.User
 import retrofit2.Call
@@ -104,5 +108,15 @@ interface APIService {
         @Query("user") user: User,
         @Query("accountDepartment") department: AccountsDepartment
     ):Call<GetTaskListResponse>
+    @POST("/update-task/")
+    fun updateTask(
+        @Header("Authorization") token:String,
+        @Body updateTaskRequest: UpdateTaskRequest
+    ):Call<UpdateTaskResponse>
+    @POST("/send-message/")
+    fun sendMessage(
+        @Header("Authorization") token:String,
+        @Body sendMessageRequest: SendMessageRequest
+    ):Call<SendMessageResponse>
 
 }

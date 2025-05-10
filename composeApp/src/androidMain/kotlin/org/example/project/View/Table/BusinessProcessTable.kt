@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -23,10 +26,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.example.project.Model.BusinessProcess
+import org.example.project.View.Item.BusinessProcessItemRow
 
 @Composable
 fun BusinessProcessTable(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    businessProcessList: SnapshotStateList<BusinessProcess>
 ){
     Column(
         modifier = modifier,
@@ -34,7 +40,7 @@ fun BusinessProcessTable(
         horizontalAlignment = Alignment.CenterHorizontally
     ){
         Row(
-            modifier = Modifier.background(Color.LightGray).
+            modifier = Modifier.background(Color(color = 0xFF87CEFA)).
             height(50.dp).drawWithContent {
                 drawContent()
                 val strokeWidth = 1.0f
@@ -73,8 +79,15 @@ fun BusinessProcessTable(
             VerticalDivider(thickness = 1.dp, color = Color.DarkGray)
             BusinessProcessTableHeader("Запустить")
         }
-        LazyColumn(modifier = Modifier.weight(1f)) {
-
+        LazyColumn(
+            modifier = Modifier.weight(1f)
+        ) {
+            items(businessProcessList){
+                itemBP ->
+                    BusinessProcessItemRow(
+                        businessProcess = itemBP
+                    )
+            }
         }
     }
 
@@ -101,6 +114,6 @@ fun BusinessProcessTableHeader(name:String){
 @Preview
 fun BusinessProcessTablePreview(){
     BusinessProcessTable(
-
+        businessProcessList = emptyList<BusinessProcess>().toMutableStateList()
     )
 }

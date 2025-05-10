@@ -192,7 +192,8 @@ fun CalendarPreview() {
                     description = "",
                     file = ByteArray(0),
                     responsiblePersons = emptyList<User>().toMutableList(),
-                    creatorUser = User("", "")
+                    creatorUser = User("", ""),
+                    completed = false
                 )
             )
         },

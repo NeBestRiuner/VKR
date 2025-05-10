@@ -42,6 +42,8 @@ import okhttp3.internal.toImmutableList
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.BottomNavItem
 import org.example.project.Model.Enums.RusMonth
+import org.example.project.Model.Message
+import org.example.project.Model.MessageWithUser
 import org.example.project.Model.Task
 import org.example.project.Model.TaskWithID
 import org.example.project.Model.User
@@ -66,7 +68,11 @@ fun HomeScreen(
     setCreator: () -> Unit,
     createTask: () -> Unit,
     freeUserList: SnapshotStateList<User>,
-    updateFreeUserList: () -> Unit
+    updateFreeUserList: () -> Unit,
+    updateTask: (TaskWithID) -> Unit,
+    message: MutableState<Message>,
+    messageList: SnapshotStateList<MessageWithUser>,
+    sendMessage: (TaskWithID, String) -> Unit,
 ) {
     val selectedType = remember{ mutableStateOf("Calendar") }
     val selectedData = remember{ mutableStateOf("Month") }
@@ -77,7 +83,8 @@ fun HomeScreen(
     val day = remember { mutableStateOf(Calendar.getInstance().get(Calendar.DAY_OF_MONTH)) }
     val currentUser = remember { mutableStateOf(creatorUser.value) }
     val selectedTask = remember { mutableStateOf(TaskWithID(
-        0,"","","","","","", ByteArray(0), emptyList<User>().toMutableList(),User("","")
+        0,"","","","","","", ByteArray(0),
+        emptyList<User>().toMutableList(),User("",""),false
     )) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -301,8 +308,11 @@ fun HomeScreen(
                     showShowTask.value = false
                 },
                 task = selectedTask.value,
-                updateTask = {},
-                sendMessage = {TaskWithID,message -> }
+                updateTask = updateTask,
+                sendMessage = sendMessage,
+                accountUser = creatorUser,
+                message = message,
+                messageList = messageList
             )
         }
     }
@@ -324,7 +334,8 @@ fun HomeScreenPreview() {
                 percent = "",
                 file = ByteArray(0),
                 responsiblePersons = emptyList<User>().toMutableStateList(),
-                creatorUser = User("","")
+                creatorUser = User("",""),
+                completed = false
             )
         ),
         creatorUser = mutableStateOf(
@@ -333,7 +344,11 @@ fun HomeScreenPreview() {
         setCreator = {},
         createTask = {},
         freeUserList = emptyList<User>().toMutableStateList(),
-        updateFreeUserList = {}
+        updateFreeUserList = {},
+        updateTask = {taskWithID ->  },
+        message = remember { mutableStateOf(Message("", ByteArray(0),"")) },
+        messageList = emptyList<MessageWithUser>().toMutableStateList(),
+        sendMessage = {taskWithID, str ->  }
     )
 }
 // Сначала преобразуем строковые даты в удобный для сравнения формат

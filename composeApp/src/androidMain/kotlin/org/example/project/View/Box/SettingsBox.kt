@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.User
 import org.example.project.View.Card.InviteCodeCard
-import java.io.StringBufferInputStream
 
 @Composable
 fun SettingsBox(

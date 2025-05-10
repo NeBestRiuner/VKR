@@ -161,7 +161,8 @@ fun CreateTaskCard(
         creatorUser = User(
             login = creatorUser.value.login,
             password = ""
-        )
+        ),
+        completed = false
     )
 
     Box(
@@ -403,7 +404,8 @@ fun CreateTaskCardPreview(){
                 percent = "",
                 file = ByteArray(0),
                 responsiblePersons = emptyList<User>().toMutableStateList(),
-                creatorUser = User("","")
+                creatorUser = User("",""),
+                completed = false
             )
         ),
         creatorUser = mutableStateOf(

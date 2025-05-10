@@ -15,4 +15,5 @@ object TaskTable: IdTable<Int>("task") {
     val priority = integer("priority")
     val percent = float("percent")
     val file = binary("file")
+    val completed = bool("completed")
 }

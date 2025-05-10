@@ -22,7 +22,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
@@ -44,7 +46,10 @@ import org.example.project.API.Data.LineAPI
 import org.example.project.API.Data.PostRectangleAPI
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.BottomNavItem
+import org.example.project.Model.BusinessProcess
 import org.example.project.Model.Line
+import org.example.project.Model.Message
+import org.example.project.Model.MessageWithUser
 import org.example.project.Model.PostRectangle
 import org.example.project.Model.Task
 import org.example.project.Model.TaskWithID
@@ -84,7 +89,12 @@ fun TaskManagerScreen(
     setCreator: () -> Unit,
     createTask: () -> Unit,
     freeUserList: SnapshotStateList<User>,
-    updateFreeUserList: () -> Unit
+    updateFreeUserList: () -> Unit,
+    businessProcessList: SnapshotStateList<BusinessProcess>,
+    updateTask: (TaskWithID) -> Unit,
+    message: MutableState<Message>,
+    messageList: SnapshotStateList<MessageWithUser>,
+    sendMessage: (TaskWithID, String) -> Unit,
 ){
     val navController = rememberNavController()
 
@@ -125,7 +135,12 @@ fun TaskManagerScreen(
                     setCreator = setCreator,
                     createTask = createTask,
                     freeUserList = freeUserList,
-                    updateFreeUserList = updateFreeUserList
+                    updateFreeUserList = updateFreeUserList,
+                    businessProcessList = businessProcessList,
+                    updateTask = updateTask,
+                    message = message,
+                    messageList = messageList,
+                    sendMessage = sendMessage
                 )
             }
         }
@@ -189,7 +204,12 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                     setCreator: () -> Unit,
                     createTask: () -> Unit,
                     freeUserList: SnapshotStateList<User>,
-                    updateFreeUserList: () -> Unit
+                    updateFreeUserList: () -> Unit,
+                    businessProcessList: SnapshotStateList<BusinessProcess>,
+                    updateTask: (TaskWithID) -> Unit,
+                    message: MutableState<Message>,
+                    messageList: SnapshotStateList<MessageWithUser>,
+                    sendMessage: (TaskWithID, String) -> Unit,
 ) {
 
     NavHost(
@@ -204,7 +224,11 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
             setCreator = setCreator,
             createTask = createTask,
             freeUserList = freeUserList,
-            updateFreeUserList = updateFreeUserList
+            updateFreeUserList = updateFreeUserList,
+            updateTask = updateTask,
+            message = message,
+            messageList = messageList,
+            sendMessage = sendMessage
         ) }
         composable(BottomNavItem.Hierarchy.route) { HierarchyBox(
                 postRectangleList = postRectangleList,
@@ -222,7 +246,8 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
         composable(BottomNavItem.BusinessProcess.route) { BusinessProcessBox(
             createBusinessProcess = {
                 navController.navigate(BottomNavItem.BusinessProcessCreate.route)
-            }
+            },
+            businessProcessList = businessProcessList
         ) }
         composable(BottomNavItem.Analytic.route) { AnalyticBox() }
         composable(BottomNavItem.Settings.route) {
@@ -289,7 +314,8 @@ fun TaskManagerScreenProfile(){
                 percent = "",
                 file = ByteArray(0),
                 responsiblePersons = emptyList<User>().toMutableStateList(),
-                creatorUser = User("","")
+                creatorUser = User("",""),
+                completed = false
             )
         ),
         creatorUser = mutableStateOf(
@@ -298,6 +324,15 @@ fun TaskManagerScreenProfile(){
         setCreator = {},
         createTask = {},
         freeUserList = emptyList<User>().toMutableStateList(),
-        updateFreeUserList = {}
+        updateFreeUserList = {},
+        businessProcessList = mutableStateListOf(
+            BusinessProcess(
+                name = "Новый БП"
+            )
+        ),
+        updateTask = {taskWithID ->  },
+        message = remember { mutableStateOf(Message("",ByteArray(0),"")) },
+        messageList = emptyList<MessageWithUser>().toMutableStateList(),
+        sendMessage = {taskWithID, str ->  }
     )
 }

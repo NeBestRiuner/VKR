@@ -60,11 +60,16 @@ import org.example.project.API.GetHierarchyResponse
 import org.example.project.API.GetTaskListResponse
 import org.example.project.API.LineAPI
 import org.example.project.API.PostRectangleAPI
+import org.example.project.API.SendMessageRequest
+import org.example.project.API.UpdateTaskRequest
+import org.example.project.API.UpdateTaskResponse
 import org.example.project.model.Bytes
 import org.example.project.model.Task
 import org.example.project.model.TaskWithId
 import org.example.project.tables.EmployeeTaskTable
+import org.example.project.tables.TaskMessageTable
 import org.example.project.tables.TaskTable
+
 
 fun main() {
     embeddedServer(Netty, port = SERVER_PORT, host = "0.0.0.0", module = Application::module)
@@ -787,6 +792,7 @@ fun Application.module() {
                                                 )
                                             }.toMutableList(),
                                             creatorUser = selectedUser,
+                                            completed = row[TaskTable.completed]
                                         )
                                     )
                                 }
@@ -835,6 +841,7 @@ fun Application.module() {
                                                     ""
                                                 )
                                             }[0],
+                                            completed = row[TaskTable.completed]
                                         )
                                     )
                                 }
@@ -854,6 +861,118 @@ fun Application.module() {
                         emptyList<TaskWithId>()
                     ))
                 }
+            }
+            post("/update-task/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+
+                val updateTaskRequest = call.receive<UpdateTaskRequest>()
+
+                val task = updateTaskRequest.taskWithID
+                val sentAccountsDepartment = updateTaskRequest.accountsDepartment
+
+                var result:String? = null
+
+                transaction{
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sentAccountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sentAccountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+
+                    if(creatorIdList.isNotEmpty()){
+                        TaskTable.update(
+                            {TaskTable.id eq task.id}
+                        ){
+                            it[beginTime] = task.beginTime
+                            it[endTime] = task.endTime
+                            it[description] = task.description
+                            it[completed] = task.completed
+                            it[name] = task.name
+                            it[percent] = task.percent.toFloat()
+                            it[priority] = task.priority.toInt()
+                        }
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="200"){
+                    call.respond(UpdateTaskResponse("200","Запрос успешно выполнен"))
+                }else{
+                    call.respond(UpdateTaskResponse("500","Не удалось обновить данные"))
+                }
+            }
+            post("/send-message/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+
+                val sendMessageRequest = call.receive<SendMessageRequest>()
+
+                val task = sendMessageRequest.taskWithID
+                val sentAccountsDepartment = sendMessageRequest.accountsDepartment
+
+                var result:String? = null
+
+                transaction{
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sentAccountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sentAccountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+
+                    val uId = UserTable.selectAll().where {
+                        UserTable.login eq loginSecret.toString()
+                    }.map{
+                        row ->
+                            row[UserTable.id]
+                    }
+
+                    if(creatorIdList.isNotEmpty()){
+                        TaskMessageTable.insert{
+                            it[text] = sendMessageRequest.message.text
+                            it[file] = sendMessageRequest.message.file
+                            it[createDate] = sendMessageRequest.message.createDate
+                            it[userId] = uId[0]
+                            it[taskId] = task.id
+                        }
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="200"){
+                    call.respond(UpdateTaskResponse("200","Запрос успешно выполнен"))
+                }else{
+                    call.respond(UpdateTaskResponse("500","Не удалось обновить данные"))
+                }
+            }
+            get("/get-message-list/"){
+
             }
         }
     }

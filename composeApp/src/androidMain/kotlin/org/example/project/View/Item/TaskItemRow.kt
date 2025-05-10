@@ -116,7 +116,8 @@ fun TaskItemRowPreview() {
                 description = "",
                 file = ByteArray(0),
                 responsiblePersons = emptyList<User>().toMutableList(),
-                creatorUser = User("","")
+                creatorUser = User("",""),
+                completed = false
             ),
         showShowTask = remember { mutableStateOf(false) },
         selectedTaskWithID = remember { mutableStateOf(
@@ -130,7 +131,8 @@ fun TaskItemRowPreview() {
                 description = "",
                 file = ByteArray(0),
                 responsiblePersons = emptyList<User>().toMutableList(),
-                creatorUser = User("","")
+                creatorUser = User("",""),
+                completed = false
             )
         ) }
 

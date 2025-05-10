@@ -19,6 +19,7 @@ import org.example.project.View.RegisterScreen
 import org.example.project.View.TaskManagerScreen
 import org.example.project.View.UserProfileScreen
 import org.example.project.ViewModel.AuthorizeViewModel
+import org.example.project.ViewModel.BusinessProcessViewModel
 import org.example.project.ViewModel.CalendarViewModel
 import org.example.project.ViewModel.HierarchyViewModel
 import org.example.project.ViewModel.MainDepartmentViewModel
@@ -39,6 +40,7 @@ class MainActivity : ComponentActivity() {
             val settingsViewModel = SettingsViewModel()
             val hierarchyViewModel = HierarchyViewModel()
             val calendarViewModel = CalendarViewModel()
+            val businessProcessViewModel = BusinessProcessViewModel()
             NavHost(navController = navController, startDestination = NavRoutes.Enter.route){
                 composable(NavRoutes.Enter.route){
                     EnterScreen(
@@ -189,6 +191,25 @@ class MainActivity : ComponentActivity() {
                             calendarViewModel.getUsersList(
                                 authorizeViewModel.user,
                                 taskManagerViewModel.selectedAccountsDepartment.value
+                            )
+                        },
+                        businessProcessList = businessProcessViewModel.businessProcessList,
+                        updateTask = {
+                            taskWithID ->
+                            calendarViewModel.updateTask(
+                                authorizeViewModel.user,
+                                taskManagerViewModel.selectedAccountsDepartment.value,
+                                taskWithID
+                            )
+                        },
+                        message = calendarViewModel.sendMessage,
+                        messageList = calendarViewModel.messageList,
+                        sendMessage = {
+                            taskWithID, str ->
+                            calendarViewModel.sendMessageAPI(
+                                authorizeViewModel.user,
+                                taskManagerViewModel.selectedAccountsDepartment.value,
+                                taskWithID
                             )
                         }
                     )

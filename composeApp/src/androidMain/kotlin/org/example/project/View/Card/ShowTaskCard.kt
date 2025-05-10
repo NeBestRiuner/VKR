@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,9 +52,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.example.project.Model.Message
+import org.example.project.Model.MessageWithUser
 import org.example.project.Model.Task
 import org.example.project.Model.TaskWithID
 import org.example.project.Model.User
+import org.example.project.View.Button.PercentComboBoxButton
+import org.example.project.View.Item.MyMessageItem
+import org.example.project.View.Item.OtherMessageItem
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -64,10 +71,21 @@ import java.util.Locale
 fun ShowTaskCard(
     onDismiss: ()->Unit,
     task: TaskWithID,
-    updateTask: () -> Unit,
-    sendMessage: (TaskWithID, String) -> Unit
+    updateTask: (TaskWithID) -> Unit,
+    sendMessage: (TaskWithID, String) -> Unit,
+    accountUser: MutableState<User>,
+    message: MutableState<Message>,
+    messageList: SnapshotStateList<MessageWithUser>
 ){
-    var message = remember { mutableStateOf("") }
+    var messageText = remember { mutableStateOf("") }
+    var executor = false
+    for(user in task.responsiblePersons){
+        if(user.login == accountUser.value.login){
+            executor = true
+        }
+    }
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -141,7 +159,7 @@ fun ShowTaskCard(
                         modifier = Modifier
                             .weight(1f)
                             .padding(10.dp),
-                        text = "Дата конца",
+                        text = "Дата завершения",
                         textAlign = TextAlign.Center,
                         style = TextStyle(
                             fontWeight = FontWeight.Bold,
@@ -188,22 +206,26 @@ fun ShowTaskCard(
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ){
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .border(1.dp, Color.Black, CircleShape),
-                        contentAlignment = Alignment.Center,
+                    Box(modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center){
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .border(1.dp, Color.Black, CircleShape),
+                            contentAlignment = Alignment.Center,
 
-                    ){
-                        Text(
-                            modifier = Modifier.padding(4.dp),
-                            text = task.priority,
-                            textAlign = TextAlign.Center
-                        )
+                            ){
+                            Text(
+                                modifier = Modifier.padding(4.dp),
+                                text = task.priority,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
-                    Text(
-                        text = task.percent
+                    PercentComboBoxButton(
+                        modifier = Modifier.weight(1f),
+                        task = task
                     )
                 }
                 Text(
@@ -229,7 +251,20 @@ fun ShowTaskCard(
                             modifier = Modifier.weight(1f)
                         )
                         {
-
+                            items(messageList){
+                                msg ->
+                                    if(msg.user == accountUser.value.login){
+                                        MyMessageItem(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            msg
+                                        )
+                                    }else{
+                                        OtherMessageItem(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            msg
+                                        )
+                                    }
+                            }
                         }
                         Box(
                             modifier = Modifier.fillMaxWidth().
@@ -240,9 +275,11 @@ fun ShowTaskCard(
                         ){
                             TextField(
                                 modifier = Modifier.weight(1f),
-                                value = message.value,
+                                value = messageText.value,
                                 onValueChange = {
-                                    newMessage -> message.value = newMessage
+                                    newMessage ->
+                                    messageText.value = newMessage
+
                                 },
                                 placeholder = {
                                     Text(
@@ -252,7 +289,17 @@ fun ShowTaskCard(
                             )
                             IconButton(
                                 onClick = {
-                                    sendMessage(task,message.value)
+                                    var selectedDate = Calendar.getInstance()
+                                    val dateTimeFormat =
+                                        SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
+
+                                    message.value = Message(
+                                        messageText.value,
+                                        ByteArray(0),
+                                        dateTimeFormat.format(selectedDate.time)
+                                        )
+                                    sendMessage(task,messageText.value)
+                                    messageText.value=""
                                 }
                             ) {
                                 Icon(
@@ -263,13 +310,49 @@ fun ShowTaskCard(
                         }
                     }
                 }
-                Button(
-                    modifier = Modifier.padding(10.dp),
-                    onClick = updateTask
-                ){
-                    Text(
-                        text = "Сохранить изменения"
-                    )
+                if(!(task.creatorUser.login == accountUser.value.login && (!executor ||
+                            task.percent == "100" || task.percent == "100.0"))){
+                    // UI для исполнителя
+                    Button(
+                        modifier = Modifier.padding(10.dp),
+                        onClick = {
+                            updateTask(task)
+                            onDismiss()
+                        }
+                    ){
+                        Text(
+                            text = "Сохранить изменения"
+                        )
+                    }
+                }else{
+                    //UI для создателя
+                    Row{
+                        Button(
+                            modifier = Modifier.weight(1f).padding(5.dp),
+                            onClick = {
+                                task.completed = false
+                                task.percent = "0"
+                                updateTask(task)
+                                onDismiss()
+                            }
+                        ){
+                            Text("Отклонить")
+                        }
+                        Button(
+                            modifier = Modifier.weight(1f).padding(5.dp),
+                            onClick = {
+                                task.completed = true
+                                task.percent = "100"
+                                updateTask(task)
+                                onDismiss()
+                            }
+                        ){
+                            Text(
+                                text = "Принять",
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -291,9 +374,23 @@ fun ShowTaskCardPreview(){
             description = "Описание задачи",
             file = ByteArray(0),
             responsiblePersons = emptyList<User>().toMutableList(),
-            creatorUser = User("", "")
+            creatorUser = User("Admin", ""),
+            completed = false
         ),
         updateTask = {},
-        sendMessage = {taskWithID, message ->  }
+        sendMessage = {taskWithID, message ->  },
+        accountUser = remember { mutableStateOf( User("NAdmin","")) },
+        message = remember { mutableStateOf(
+                Message(text="",ByteArray(0),"08 03 2025 14:58")
+            )
+        },
+        messageList = mutableStateListOf(
+            MessageWithUser(
+                file = ByteArray(0),
+                text = "Новое сообщение",
+                user = "Admin",
+                createDate = "10 May 2025 08:41"
+            )
+        )
     )
 }

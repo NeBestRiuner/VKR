@@ -47,6 +47,7 @@ fun EnterScreen(modifier: Modifier = Modifier, onNavigateToRegister: () -> Unit,
             modifier = Modifier.padding(top = 40.dp)
         )
         Button(onClick = {
+                            println(login.value+" Получилось")
                             onCheckUserAuth(login.value,password.value,onNavigateToMainMenu)
                          },
             modifier = Modifier.padding(top = 40.dp)

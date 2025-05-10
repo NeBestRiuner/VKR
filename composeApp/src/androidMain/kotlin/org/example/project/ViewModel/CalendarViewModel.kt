@@ -10,8 +10,14 @@ import org.example.project.API.Data.CreateTaskRequest
 import org.example.project.API.Data.CreateTaskResponse
 import org.example.project.API.Data.GetTaskListResponse
 import org.example.project.API.Data.GetUsersListResponse
+import org.example.project.API.Data.SendMessageRequest
+import org.example.project.API.Data.SendMessageResponse
+import org.example.project.API.Data.UpdateTaskRequest
+import org.example.project.API.Data.UpdateTaskResponse
 import org.example.project.API.RetrofitClient.apiService
 import org.example.project.Model.AccountsDepartment
+import org.example.project.Model.Message
+import org.example.project.Model.MessageWithUser
 import org.example.project.Model.Task
 import org.example.project.Model.TaskWithID
 import org.example.project.Model.User
@@ -36,9 +42,13 @@ class CalendarViewModel() : ViewModel(){
             percent = "0",
             file = ByteArray(0),
             responsiblePersons = emptyList<User>().toMutableList(),
-            creatorUser = User("","")
+            creatorUser = User("",""),
+            completed = false
         )
     )
+    var sendMessage = mutableStateOf(Message("", ByteArray(0),""))
+
+    var messageList = emptyList<MessageWithUser>().toMutableStateList()
 
     private var timer: Timer? = null
     private var job: Job? = null
@@ -79,6 +89,35 @@ class CalendarViewModel() : ViewModel(){
         })
 
     }
+    fun updateTask(user: UserSession?, accountsDepartment: AccountsDepartment, taskWithID: TaskWithID){
+        val token = user?.token
+        val call = apiService.updateTask("Bearer $token", UpdateTaskRequest(
+            accountsDepartment = accountsDepartment, taskWithID = taskWithID
+        )
+        )
+
+        call.enqueue(object : Callback<UpdateTaskResponse> {
+            override fun onResponse(call: Call<UpdateTaskResponse>, response: Response<UpdateTaskResponse>) {
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    if (result != null) {
+                        if(result.status=="200"){
+
+                        }
+                    }
+                    // Обработка успешного ответа
+                } else {
+                    // Обработка ошибки
+                }
+            }
+
+            override fun onFailure(call: Call<UpdateTaskResponse>, t: Throwable) {
+                // Обработка ошибки сети
+            }
+        })
+
+    }
+
     fun getUsersList(user: UserSession?, accountsDepartment: AccountsDepartment){
         val token = user?.token
         val call = apiService.getUsersList("Bearer $token", accountsDepartment)
@@ -156,5 +195,37 @@ class CalendarViewModel() : ViewModel(){
     override fun onCleared() {
         stopSendingRequests()
         super.onCleared()
+    }
+
+    fun sendMessageAPI(user: UserSession?, accountsDepartment: AccountsDepartment,
+                       taskWithID: TaskWithID){
+        val token = user?.token
+        val call = apiService.sendMessage("Bearer $token",
+            sendMessageRequest = SendMessageRequest(
+                accountsDepartment,
+                taskWithID,
+                message = sendMessage.value
+            )
+        )
+
+        call.enqueue(object : Callback<SendMessageResponse> {
+            override fun onResponse(call: Call<SendMessageResponse>, response: Response<SendMessageResponse>) {
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    if (result != null) {
+                        if(result.status=="200"){
+
+                        }
+                    }
+                    // Обработка успешного ответа
+                } else {
+                    // Обработка ошибки
+                }
+            }
+
+            override fun onFailure(call: Call<SendMessageResponse>, t: Throwable) {
+                // Обработка ошибки сети
+            }
+        })
     }
 }

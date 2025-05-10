@@ -14,5 +14,6 @@ data class TaskWithId(
     var percent: String,
     var file: ByteArray,
     var responsiblePersons: MutableList<UserAPI>,
-    var creatorUser: UserAPI
+    var creatorUser: UserAPI,
+    var completed: Boolean
 )
