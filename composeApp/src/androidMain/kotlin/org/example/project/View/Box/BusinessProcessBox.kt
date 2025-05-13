@@ -31,7 +31,8 @@ fun BusinessProcessBox(
     createBusinessProcess: ()->Unit,
     businessProcessList: SnapshotStateList<BusinessProcess>,
     editBusinessProcess: ()->Unit,
-    selectedBusinessProcess: MutableState<BusinessProcess>
+    selectedBusinessProcess: MutableState<BusinessProcess>,
+    runBusinessProcess: ()->Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize(),
@@ -48,7 +49,8 @@ fun BusinessProcessBox(
                 modifier = Modifier.weight(1f),
                 businessProcessList = businessProcessList,
                 editBusinessProcess = editBusinessProcess,
-                selectedBusinessProcess = selectedBusinessProcess
+                selectedBusinessProcess = selectedBusinessProcess,
+                runBusinessProcess = runBusinessProcess
             )
             Button(
                 modifier = Modifier.padding(10.dp),
@@ -91,6 +93,7 @@ fun BusinessProcessBoxPreview(){
                     bpTaskList = emptyList<BPTask>().toMutableList()
                 )
             )
-        }
+        },
+        runBusinessProcess = {}
     )
 }

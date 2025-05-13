@@ -51,6 +51,7 @@ import org.example.project.View.Card.CreateTaskCard
 import org.example.project.View.Card.ShowTaskCard
 import org.example.project.View.Item.TaskItemRow
 import org.example.project.View.Table.CustomCalendar
+import org.example.project.View.Table.CustomCalendarWeek
 import org.example.project.View.Table.DepartmentTableItem
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
@@ -147,7 +148,7 @@ fun HomeScreen(
                     Row(modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically){
-                        if(selectedData.value=="Month"){
+                        if(selectedData.value=="Month"||selectedData.value=="Week"){
                             IconButton(
                                 modifier = Modifier.border(BorderStroke(1.dp, Color.Black)),
                                 onClick = {
@@ -164,7 +165,7 @@ fun HomeScreen(
                         }
                         Text("${RusMonth.fromInt(month.value).russianName}, ${year.value}", modifier = Modifier.padding(10.dp)
                             , textAlign = TextAlign.Center)
-                        if(selectedData.value=="Month")
+                        if(selectedData.value=="Month"||selectedData.value=="Week")
                         IconButton(
                             modifier = Modifier.border(BorderStroke(1.dp, Color.Black)),
                             onClick = {
@@ -191,7 +192,8 @@ fun HomeScreen(
                         taskList = taskList, selectedData = selectedData, selectedUser = currentUser)
                 }
                 if(selectedData.value == "Week"){
-
+                    CustomCalendarWeek(currentYear = year,currentMonth = month, day = day,
+                        taskList = taskList, selectedData = selectedData, selectedUser = currentUser)
                 }
                 if(selectedData.value == "Day"){
                     Row{

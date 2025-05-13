@@ -66,7 +66,7 @@ fun ShowEditBPTaskCard(
     selectedBPTask: MutableState<BPTask>,
     showEditBPTaskCard: MutableState<Boolean>,
     bpStateTaskList: SnapshotStateList<BPTask>,
-    postRectangleAPIList: SnapshotStateList<PostRectangleAPI>
+    postRectangleAPIList: SnapshotStateList<PostRectangleAPI>,
 ){
     var priority = remember{ mutableStateOf(selectedBPTask.value.priority.toInt()) }
     var name = remember { mutableStateOf(selectedBPTask.value.name) }
@@ -242,6 +242,11 @@ fun ShowEditBPTaskCard(
                                 bpTask.name = selectedBPTask.value.name
                                 selectedBPTask.value.duration = durationS.value
                                 bpTask.duration = selectedBPTask.value.duration
+                                for(post in postRectangleAPIList){
+                                    if(bpTask.responsiblePost==post.text){
+                                        bpTask.responsibleUser = post.employeeList.toMutableList()
+                                    }
+                                }
                             }
                         }
 

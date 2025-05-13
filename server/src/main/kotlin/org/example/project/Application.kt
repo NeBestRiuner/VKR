@@ -65,7 +65,11 @@ import org.example.project.API.GetMessageListResponse
 import org.example.project.API.GetTaskListResponse
 import org.example.project.API.LineAPI
 import org.example.project.API.PostRectangleAPI
+import org.example.project.API.RunBusinessProcessRequest
+import org.example.project.API.RunBusinessProcessResponse
 import org.example.project.API.SendMessageRequest
+import org.example.project.API.UpdateBusinessProcessRequest
+import org.example.project.API.UpdateBusinessProcessResponse
 import org.example.project.API.UpdateTaskRequest
 import org.example.project.API.UpdateTaskResponse
 import org.example.project.model.BPTask
@@ -74,11 +78,15 @@ import org.example.project.model.Bytes
 import org.example.project.model.MessageWithUser
 import org.example.project.model.Task
 import org.example.project.model.TaskWithId
+import org.example.project.tables.BusinessProcessCreatedTaskTable
 import org.example.project.tables.BusinessProcessTable
 import org.example.project.tables.BusinessProcessTaskTable
 import org.example.project.tables.EmployeeTaskTable
 import org.example.project.tables.TaskMessageTable
 import org.example.project.tables.TaskTable
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 
 fun main() {
@@ -1130,10 +1138,10 @@ fun Application.module() {
                             row ->
                         row[AccountsEmployeeTable.id]
                     }
-                    var taskList = emptyList<BusinessProcess>()
+                    var BPList = emptyList<BusinessProcess>()
                     if(creatorIdList.isNotEmpty()
                     ){
-                        taskList = BusinessProcessTable.selectAll().where{
+                        BPList = BusinessProcessTable.selectAll().where{
                             BusinessProcessTable.departmentId eq departmentIdList[0]
                         }.map{
                             row ->
@@ -1141,16 +1149,37 @@ fun Application.module() {
                                     id = row[BusinessProcessTable.id].value,
                                     name = row[BusinessProcessTable.name],
                                     completed = row[BusinessProcessTable.completed],
-                                    emptyList<BPTask>().toMutableList()
+                                    bpTaskList = BusinessProcessTaskTable.selectAll().where{
+                                        BusinessProcessTaskTable.bpId eq row[BusinessProcessTable.id].value
+                                    }.map{
+                                        bptRow ->
+                                            BPTask(
+                                                id = bptRow[BusinessProcessTaskTable.id].value,
+                                                name = bptRow[BusinessProcessTaskTable.name],
+                                                description = bptRow[BusinessProcessTaskTable.description],
+                                                duration = bptRow[BusinessProcessTaskTable.duration].toString(),
+                                                priority = bptRow[BusinessProcessTaskTable.priority].toString(),
+                                                percent = bptRow[BusinessProcessTaskTable.percent].toString(),
+                                                file = bptRow[BusinessProcessTaskTable.file],
+                                                responsiblePost = bptRow[BusinessProcessTaskTable.responsiblePost],
+                                                responsibleUser = emptyList<UserAPI>().toMutableList(),
+                                                creatorUser = UserAPI("",""),
+                                                completed = bptRow[BusinessProcessTaskTable.completed],
+                                                position = bptRow[BusinessProcessTaskTable.position]
+                                            )
+                                    }.toMutableList()
                                 )
                         }
-                        businessProcessListG = taskList.toMutableList()
+                        businessProcessListG = BPList.toMutableList()
                         result = "200"
                     }else{
                         // нет такого бухгалтера
                     }
                 }
                 if(result!=null){
+                    for(bp in businessProcessListG){
+                        println(bp.bpTaskList.size)
+                    }
                     call.respond(GetBusinessProcessResponse(status = "200", description = "Успешно выполнен запрос",
                         businessProcessListG
                     ))
@@ -1158,6 +1187,192 @@ fun Application.module() {
                     call.respond(GetBusinessProcessResponse(status = "500", description = "Ошибка сервера",
                         businessProcessListG
                     ))
+                }
+            }
+            post("/update-business-process/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+
+                val updateBusinessProcessRequest = call.receive<UpdateBusinessProcessRequest>()
+
+                val sentAccountsDepartment = updateBusinessProcessRequest.accountsDepartment
+                val businessProcess = updateBusinessProcessRequest.businessProcess
+
+                var result:String? = null
+
+                transaction{
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sentAccountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sentAccountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+
+                    val uId = UserTable.selectAll().where {
+                        UserTable.login eq loginSecret.toString()
+                    }.map{
+                            row ->
+                        row[UserTable.id]
+                    }
+
+                    if(creatorIdList.isNotEmpty()){
+                        //обновили БП
+                        BusinessProcessTable.update(
+                            {BusinessProcessTable.id eq businessProcess.id}
+                        ){
+                            it[name] = businessProcess.name
+                            it[completed] = businessProcess.completed
+                        }
+                        //создаём или обновляем задания
+                        println(businessProcess.bpTaskList.size)
+                        for(bpTask in businessProcess.bpTaskList){
+                            if(BusinessProcessTaskTable.selectAll().where {
+                                    BusinessProcessTaskTable.id eq bpTask.id
+                                }.map { row ->
+                                    row[BusinessProcessTaskTable.id]
+                                }.isNotEmpty())
+                            {
+                                BusinessProcessTaskTable.update({
+                                    BusinessProcessTaskTable.id eq bpTask.id
+                                }) {
+                                    it[description] = bpTask.description
+                                    it[name] = bpTask.name
+                                    it[duration] = bpTask.duration.toInt()
+                                    it[priority] = bpTask.priority.toInt()
+                                    it[file] = bpTask.file
+                                    it[responsiblePost] = bpTask.responsiblePost
+                                }
+                            }else{
+                                BusinessProcessTaskTable.insert{
+                                    it[description] = bpTask.description
+                                    it[name] = bpTask.name
+                                    it[duration] = bpTask.duration.toInt()
+                                    it[priority] = bpTask.priority.toInt()
+                                    it[file] = bpTask.file
+                                    it[completed] = false
+                                    it[percent] = 0.0f
+                                    it[position] = bpTask.position
+                                    it[bpId] = businessProcess.id
+                                    it[responsiblePost] = bpTask.responsiblePost
+                                }
+                            }
+                        }
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="200"){
+                    call.respond(UpdateBusinessProcessResponse("200","Запрос успешно выполнен"))
+                }else{
+                    call.respond(UpdateBusinessProcessResponse("500","Не удалось обновить данные"))
+                }
+            }
+            post("/run-business-process/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+
+                val runBusinessProcessRequest = call.receive<RunBusinessProcessRequest>()
+
+                val sentAccountsDepartment = runBusinessProcessRequest.accountsDepartment
+                val businessProcess = runBusinessProcessRequest.businessProcess
+                val postRectangleAPIList = runBusinessProcessRequest.postRectangleAPIList
+
+                var result:String? = null
+
+                transaction{
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sentAccountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sentAccountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+
+                    val uId = UserTable.selectAll().where {
+                        UserTable.login eq loginSecret.toString()
+                    }.map{
+                            row ->
+                        row[UserTable.id]
+                    }
+                    var currentTimeString = getCurrentTimeFormatted()
+                    if(creatorIdList.isNotEmpty()){
+                        val createdTaskList = emptyList<Int>().toMutableList()
+                        for(bpTask in businessProcess.bpTaskList){
+                            val finalTime = formatDateTime(
+                                parseStringToLocalDateTime(currentTimeString)?.plusHours(bpTask.duration.toLong())
+                                    ?: LocalDateTime.now())
+                            val newTID = TaskTable.insertAndGetId {
+                                it[name] = bpTask.name
+                                it[description] = bpTask.description
+                                it[creatorId] = creatorIdList[0].value
+                                it[completed] = false
+                                it[percent] = bpTask.percent.toFloat()
+                                it[file] = bpTask.file
+                                it[cycleType] = "none"
+                                it[cycleDuration] = "0"
+                                it[priority] = bpTask.priority.toInt()
+                                it[beginTime] = currentTimeString
+                                it[endTime] = finalTime
+                            }.value
+                            createdTaskList.add(
+                                newTID
+                            )
+                            for(post in postRectangleAPIList){
+                                if(post.text == bpTask.responsiblePost){
+                                    bpTask.responsibleUser = post.employeeList.toMutableList()
+                                }
+                            }
+                            for(employee in bpTask.responsibleUser){
+                                EmployeeTaskTable.insert{
+                                    it[taskId] = newTID
+                                    it[employeeId] = UserTable.join(AccountsEmployeeTable, JoinType.INNER){
+                                        (UserTable.login eq employee.login).and(
+                                            AccountsEmployeeTable.userId eq UserTable.id
+                                        ).and(AccountsEmployeeTable.departmentId eq departmentIdList[0])
+                                    }.selectAll().map{
+                                        row ->
+                                            row[AccountsEmployeeTable.id]
+                                    }[0].value
+                                }
+                            }
+                            BusinessProcessCreatedTaskTable.insert{
+                                it[taskId] = newTID
+                                it[bpTaskId] = bpTask.id
+                            }
+                            currentTimeString = finalTime
+                        }
+
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="200"){
+                    call.respond(RunBusinessProcessResponse("200","Запрос успешно выполнен"))
+                }else{
+                    call.respond(RunBusinessProcessResponse("500","Не удалось обновить данные"))
                 }
             }
         }
@@ -1231,5 +1446,22 @@ fun parseUserFromQuery(query: String): UserAPI {
         login = login.trim(),
         password = password.trim()
     )
+}
+fun getCurrentTimeFormatted(): String {
+    val currentTime = LocalDateTime.now()
+    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")
+    return currentTime.format(formatter)
+}
+fun formatDateTime(dateTime: LocalDateTime): String {
+    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")
+    return dateTime.format(formatter)
+}
+fun parseStringToLocalDateTime(dateTimeString: String): LocalDateTime? {
+    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")
+    return try {
+        LocalDateTime.parse(dateTimeString, formatter)
+    } catch (e: DateTimeParseException) {
+        null // Если строка не соответствует формату
+    }
 }
 

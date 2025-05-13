@@ -40,7 +40,8 @@ fun BusinessProcessTable(
     modifier: Modifier = Modifier,
     businessProcessList: SnapshotStateList<BusinessProcess>,
     editBusinessProcess: ()->Unit,
-    selectedBusinessProcess: MutableState<BusinessProcess>
+    selectedBusinessProcess: MutableState<BusinessProcess>,
+    runBusinessProcess: ()->Unit
 ){
     Column(
         modifier = modifier.padding(start = 30.dp, end = 30.dp),
@@ -113,7 +114,8 @@ fun BusinessProcessTable(
                         modifier = modifier,
                         businessProcess = itemBP,
                         editBusinessProcess = editBusinessProcess,
-                        selectedBusinessProcess = selectedBusinessProcess
+                        selectedBusinessProcess = selectedBusinessProcess,
+                        runBusinessProcess = runBusinessProcess
                     )
             }
         }
@@ -162,6 +164,7 @@ fun BusinessProcessTablePreview(){
                 bpTaskList = emptyList<BPTask>().toMutableList()
             )
         )
-        }
+        },
+        runBusinessProcess = {}
     )
 }

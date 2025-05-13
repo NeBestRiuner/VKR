@@ -20,10 +20,14 @@ import org.example.project.API.Data.GetProfileInfoResponse
 import org.example.project.API.Data.GetTaskListResponse
 import org.example.project.API.Data.GetUsersListResponse
 import org.example.project.API.Data.LoginUserResponse
+import org.example.project.API.Data.RunBusinessProcessRequest
+import org.example.project.API.Data.RunBusinessProcessResponse
 import org.example.project.API.Data.SendHierarchyRequest
 import org.example.project.API.Data.SendHierarchyResponse
 import org.example.project.API.Data.SendMessageRequest
 import org.example.project.API.Data.SendMessageResponse
+import org.example.project.API.Data.UpdateBusinessProcessRequest
+import org.example.project.API.Data.UpdateBusinessProcessResponse
 import org.example.project.API.Data.UpdateProfileInfoRequest
 import org.example.project.API.Data.UpdateTaskRequest
 import org.example.project.API.Data.UpdateTaskResponse
@@ -140,4 +144,14 @@ interface APIService {
         @Header("Authorization") token:String,
         @Query("accountDepartment") department: AccountsDepartment
     ):Call<GetBusinessProcessResponse>
+    @POST("/update-business-process/")
+    fun updateBusinessProcess(
+            @Header("Authorization") token: String,
+            @Body updateBusinessProcessRequest: UpdateBusinessProcessRequest
+            ):Call<UpdateBusinessProcessResponse>
+    @POST("/run-business-process/")
+    fun runBusinessProcess(
+        @Header("Authorization") token: String,
+        @Body runBusinessProcessRequest: RunBusinessProcessRequest
+    ):Call<RunBusinessProcessResponse>
 }

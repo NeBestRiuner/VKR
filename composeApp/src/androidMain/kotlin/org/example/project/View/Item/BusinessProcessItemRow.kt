@@ -31,7 +31,8 @@ fun BusinessProcessItemRow(
     modifier:Modifier = Modifier,
     businessProcess: BusinessProcess,
     editBusinessProcess: ()->Unit,
-    selectedBusinessProcess: MutableState<BusinessProcess>
+    selectedBusinessProcess: MutableState<BusinessProcess>,
+    runBusinessProcess: ()->Unit
 ){
     Row(
         modifier = modifier.
@@ -57,9 +58,7 @@ fun BusinessProcessItemRow(
         }
         IconButton(
             modifier = Modifier.weight(1f),
-            onClick = {
-
-            }
+            onClick = runBusinessProcess
         ) {
             Icon(
                 imageVector = Icons.Filled.PlayArrow,
@@ -90,6 +89,6 @@ fun BusinessProcessItemRowPreview(){
                 )
             )
         },
-
+        runBusinessProcess = {}
     )
 }

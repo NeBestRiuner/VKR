@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 sealed class BottomNavItem(val route:String, val title: String, val icon: ImageVector) {
     object Calendar : BottomNavItem("calendar", "Календарь", Icons.Default.DateRange)
     object Hierarchy : BottomNavItem("hierarchy", "Иерархия бухгалтерии", Icons.Default.Home)
-    object BusinessProcess : BottomNavItem("business_process", "Бизнес-процессы", Icons.AutoMirrored.Default.List)
+    object BusinessProcess : BottomNavItem("business_process", "Бизнес-\nпроцессы", Icons.AutoMirrored.Default.List)
     object Analytic : BottomNavItem("analytic", "Аналитика", Icons.Default.Search)
     object Settings : BottomNavItem("settings", "Настройки", Icons.Default.Settings)
     object BusinessProcessCreate : BottomNavItem("business_process_create",

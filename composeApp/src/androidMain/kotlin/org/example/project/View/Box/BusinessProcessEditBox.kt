@@ -47,9 +47,10 @@ fun BusinessProcessEditBox(
     leaveBPEdit: ()->Unit,
     selectedBusinessProcess: MutableState<BusinessProcess>,
     postRectangleAPIList: SnapshotStateList<PostRectangleAPI>,
-    businessProcessList: SnapshotStateList<BusinessProcess>
+    businessProcessList: SnapshotStateList<BusinessProcess>,
+    updateBusinessProcess: ()->Unit
 ){
-    var bpStateTaskList = remember { selectedBusinessProcess.value.bpTaskList.toMutableStateList() }
+    var bpStateTaskList = remember { selectedBusinessProcess.value.bpTaskList.sortedBy { it.position }.toMutableStateList() }
     var showBPTaskEditCard = remember{ mutableStateOf(false) }
     var selectedBPTask = remember {
         mutableStateOf(
@@ -161,6 +162,7 @@ fun BusinessProcessEditBox(
                                 bp.bpTaskList.addAll(bpStateTaskList)
                             }
                         }
+                        updateBusinessProcess.invoke()
                     }
                 ){
                     Text("Сохранить изменения")
@@ -210,6 +212,7 @@ fun BusinessProcessEditBoxPreview(){
             )
         },
         postRectangleAPIList = emptyList<PostRectangleAPI>().toMutableStateList(),
-        businessProcessList = emptyList<BusinessProcess>().toMutableStateList()
+        businessProcessList = emptyList<BusinessProcess>().toMutableStateList(),
+        updateBusinessProcess = {}
     )
 }

@@ -234,7 +234,20 @@ class MainActivity : ComponentActivity() {
                                 accountsDepartment = taskManagerViewModel.selectedAccountsDepartment.value
                             )
                         },
-                        selectedBusinessProcess = businessProcessViewModel.selectedBusinessProcess
+                        selectedBusinessProcess = businessProcessViewModel.selectedBusinessProcess,
+                        updateBusinessProcess = {
+                            businessProcessViewModel.updateBusinessProcess(
+                                user = authorizeViewModel.user,
+                                accountsDepartment = taskManagerViewModel.selectedAccountsDepartment.value
+                            )
+                        },
+                        runBusinessProcess = {
+                            businessProcessViewModel.runBusinessProcess(
+                                user = authorizeViewModel.user,
+                                accountsDepartment = taskManagerViewModel.selectedAccountsDepartment.value,
+                                postRectangleAPIList = hierarchyViewModel.postRectangleAPIList
+                            )
+                        }
                     )
                 }
             }

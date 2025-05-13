@@ -1,6 +1,7 @@
 package org.example.project.model
 
 import kotlinx.serialization.Serializable
+import org.example.project.API.UserAPI
 
 @Serializable
 
@@ -13,8 +14,8 @@ data class BPTask(
     var percent: String,
     var file: ByteArray,
     var responsiblePost: String,
-    var responsibleUser: MutableList<User>,
-    var creatorUser: User,
+    var responsibleUser: MutableList<UserAPI>,
+    var creatorUser: UserAPI,
     var completed: Boolean,
     var position: Int
 )

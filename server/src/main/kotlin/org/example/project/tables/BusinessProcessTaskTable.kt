@@ -23,6 +23,7 @@ object BusinessProcessTaskTable: IdTable<Int>("business_process_task") {
     val percent = float("percent")
     val file = binary("file")
     val completed = bool("completed")
+    val responsiblePost = text("responsible_post")
     init{
         BusinessProcessTaskTable.foreignKey( bpId to BusinessProcessTable.id)
     }

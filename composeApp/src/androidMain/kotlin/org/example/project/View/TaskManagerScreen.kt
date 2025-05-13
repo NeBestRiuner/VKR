@@ -103,6 +103,8 @@ fun TaskManagerScreen(
     sendCreateBusinessProcess: () -> Unit,
     getBusinessProcess: () -> Unit,
     selectedBusinessProcess: MutableState<BusinessProcess>,
+    updateBusinessProcess: ()->Unit,
+    runBusinessProcess: ()->Unit
 
 ){
     val navController = rememberNavController()
@@ -155,7 +157,9 @@ fun TaskManagerScreen(
                     bpMutableState = bpMutableState,
                     sendCreateBusinessProcess = sendCreateBusinessProcess,
                     getBusinessProcess = getBusinessProcess,
-                    selectedBusinessProcess = selectedBusinessProcess
+                    selectedBusinessProcess = selectedBusinessProcess,
+                    updateBusinessProcess = updateBusinessProcess,
+                    runBusinessProcess = runBusinessProcess
                 )
             }
         }
@@ -230,7 +234,9 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                     bpMutableState: MutableState<BusinessProcess>,
                     sendCreateBusinessProcess: () -> Unit,
                     getBusinessProcess: () -> Unit,
-                    selectedBusinessProcess: MutableState<BusinessProcess>
+                    selectedBusinessProcess: MutableState<BusinessProcess>,
+                    updateBusinessProcess: ()->Unit,
+                    runBusinessProcess: ()->Unit
 ) {
 
     NavHost(
@@ -275,7 +281,11 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
             )
         }
         composable(BottomNavItem.BusinessProcess.route) {
+            var isArrowed = remember { mutableStateOf(false) }
+            var secondDot = remember { mutableStateOf(0) }
+            var firstDotRectangle =  remember { mutableStateOf(PostRectangle()) }
             getBusinessProcess.invoke()
+            getHierarchy.invoke(isArrowed,secondDot,firstDotRectangle)
             BusinessProcessBox(
                 createBusinessProcess = {
                     navController.navigate(BottomNavItem.BusinessProcessCreate.route)
@@ -284,7 +294,8 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                 editBusinessProcess = {
                     navController.navigate(BottomNavItem.BusinessProcessEdit.route)
                 },
-                selectedBusinessProcess = selectedBusinessProcess
+                selectedBusinessProcess = selectedBusinessProcess,
+                runBusinessProcess = runBusinessProcess
             )
         }
         composable(BottomNavItem.Analytic.route) { AnalyticBox() }
@@ -314,7 +325,11 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                 },
                 selectedBusinessProcess = selectedBusinessProcess,
                 postRectangleAPIList = postRectangleListAPI,
-                businessProcessList = businessProcessList
+                businessProcessList = businessProcessList,
+                updateBusinessProcess = {
+                    navController.popBackStack()
+                    updateBusinessProcess.invoke()
+                }
             )
         }
 
@@ -412,6 +427,8 @@ fun TaskManagerScreenProfile(){
                     bpTaskList = emptyList<BPTask>().toMutableList()
                 )
             )
-        }
+        },
+        updateBusinessProcess = {},
+        runBusinessProcess = {}
     )
 }
