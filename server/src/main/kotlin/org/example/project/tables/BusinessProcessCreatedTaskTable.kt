@@ -8,7 +8,7 @@ import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.Column
 
 object BusinessProcessCreatedTaskTable: IdTable<Int>("business_process_created_task")  {
-    override val id : Column<EntityID<Int>> = BusinessProcessTable.integer("bp_ct_id").autoIncrement().entityId()
+    override val id : Column<EntityID<Int>> = BusinessProcessCreatedTaskTable.integer("bp_ct_id").autoIncrement().entityId()
     val taskId = integer("task_id")
     val bpTaskId = integer("bp_task_id")
     init{

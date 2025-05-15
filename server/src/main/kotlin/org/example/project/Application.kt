@@ -87,6 +87,7 @@ import org.example.project.tables.TaskTable
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.Locale
 
 
 fun main() {
@@ -1319,6 +1320,7 @@ fun Application.module() {
                     var currentTimeString = getCurrentTimeFormatted()
                     if(creatorIdList.isNotEmpty()){
                         val createdTaskList = emptyList<Int>().toMutableList()
+                        println("размер bpTaskList - ${businessProcess.bpTaskList.size}")
                         for(bpTask in businessProcess.bpTaskList){
                             val finalTime = formatDateTime(
                                 parseStringToLocalDateTime(currentTimeString)?.plusHours(bpTask.duration.toLong())
@@ -1339,6 +1341,7 @@ fun Application.module() {
                             createdTaskList.add(
                                 newTID
                             )
+                            println("Размеры списка должностей - ${postRectangleAPIList.size}")
                             for(post in postRectangleAPIList){
                                 if(post.text == bpTask.responsiblePost){
                                     bpTask.responsibleUser = post.employeeList.toMutableList()
@@ -1449,15 +1452,15 @@ fun parseUserFromQuery(query: String): UserAPI {
 }
 fun getCurrentTimeFormatted(): String {
     val currentTime = LocalDateTime.now()
-    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")
+    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm", Locale.ENGLISH)
     return currentTime.format(formatter)
 }
 fun formatDateTime(dateTime: LocalDateTime): String {
-    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")
+    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm", Locale.ENGLISH)
     return dateTime.format(formatter)
 }
 fun parseStringToLocalDateTime(dateTimeString: String): LocalDateTime? {
-    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")
+    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm", Locale.ENGLISH)
     return try {
         LocalDateTime.parse(dateTimeString, formatter)
     } catch (e: DateTimeParseException) {
