@@ -58,6 +58,12 @@ import java.net.URLDecoder
 import java.time.Instant.now
 import org.example.project.API.CreateTaskRequest
 import org.example.project.API.CreateTaskResponse
+import org.example.project.API.DeleteBPRequest
+import org.example.project.API.DeleteBPResponse
+import org.example.project.API.DeleteBPTaskRequest
+import org.example.project.API.DeleteBPTaskResponse
+import org.example.project.API.DeleteTaskRequest
+import org.example.project.API.DeleteTaskResponse
 import org.example.project.API.GetBusinessProcessResponse
 import org.example.project.API.GetHierarchyResponse
 import org.example.project.API.GetMessageListRequest
@@ -1376,6 +1382,162 @@ fun Application.module() {
                     call.respond(RunBusinessProcessResponse("200","Запрос успешно выполнен"))
                 }else{
                     call.respond(RunBusinessProcessResponse("500","Не удалось обновить данные"))
+                }
+            }
+            post("/delete-task/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+
+                val deleteTaskRequest = call.receive<DeleteTaskRequest>()
+
+                val sentAccountsDepartment = deleteTaskRequest.accountsDepartment
+                val task = deleteTaskRequest.taskWithID
+
+                var result:String? = null
+
+                transaction{
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sentAccountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sentAccountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+
+                    val uId = UserTable.selectAll().where {
+                        UserTable.login eq loginSecret.toString()
+                    }.map{
+                            row ->
+                        row[UserTable.id]
+                    }
+
+                    if(creatorIdList.isNotEmpty()){
+                        TaskTable.deleteWhere {
+                            TaskTable.id eq task.id
+                        }
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="200"){
+                    call.respond(DeleteTaskResponse("200","Запрос успешно выполнен"))
+                }else{
+                    call.respond(DeleteTaskResponse("500","Не удалось обновить данные"))
+                }
+            }
+            post("/delete-bptask/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+
+                val deleteBPTaskRequest = call.receive<DeleteBPTaskRequest>()
+
+                val sentAccountsDepartment = deleteBPTaskRequest.accountsDepartment
+                val bpTask = deleteBPTaskRequest.bpTask
+
+                var result:String? = null
+
+                transaction{
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sentAccountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sentAccountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+
+                    val uId = UserTable.selectAll().where {
+                        UserTable.login eq loginSecret.toString()
+                    }.map{
+                            row ->
+                        row[UserTable.id]
+                    }
+
+                    if(creatorIdList.isNotEmpty()){
+                        BusinessProcessTaskTable.deleteWhere {
+                            BusinessProcessTaskTable.id eq bpTask.id
+                        }
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="200"){
+                    call.respond(DeleteBPTaskResponse("200","Запрос успешно выполнен"))
+                }else{
+                    call.respond(DeleteBPTaskResponse("500","Не удалось обновить данные"))
+                }
+            }
+            post("/delete-business-process/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+
+                val deleteBusinessProcess = call.receive<DeleteBPRequest>()
+
+                val sentAccountsDepartment = deleteBusinessProcess.accountsDepartment
+                val businessProcess = deleteBusinessProcess.businessProcess
+
+                var result:String? = null
+
+                transaction{
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sentAccountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sentAccountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+
+                    val uId = UserTable.selectAll().where {
+                        UserTable.login eq loginSecret.toString()
+                    }.map{
+                            row ->
+                        row[UserTable.id]
+                    }
+
+                    if(creatorIdList.isNotEmpty()){
+                        BusinessProcessTable.deleteWhere {
+                            BusinessProcessTable.id eq businessProcess.id
+                        }
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="200"){
+                    call.respond(DeleteBPResponse("200","Запрос успешно выполнен"))
+                }else{
+                    call.respond(DeleteBPResponse("500","Не удалось обновить данные"))
                 }
             }
         }

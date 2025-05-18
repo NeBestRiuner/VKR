@@ -16,7 +16,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,9 +36,13 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.User
 import org.example.project.View.Card.InviteCodeCard
@@ -64,15 +73,17 @@ fun SettingsBox(
                     modifier = Modifier.weight(1.0f),
                     checked= selectedOption.value == "Department",
                     onCheckedChange={
+                        onGetUserList.invoke()
                         selectedOption.value = "Department"
                     }
                 ){
-                    Text("Настройки бухгалтерии")
+                    Text("Приглашение сотрудников")
                 }
                 IconToggleButton(
                     modifier = Modifier.weight(1.0f),
                     checked = selectedOption.value == "Users",
                     onCheckedChange = {
+                        onGetUserList.invoke()
                         selectedOption.value = "Users"
                     }
                 ) {
@@ -81,13 +92,38 @@ fun SettingsBox(
             }
             if(selectedOption.value == "Department"){
                 Box(Modifier.fillMaxSize()){
-                    Column(Modifier.padding(10.dp)){
-
-                    }
-                    Button(modifier = Modifier.fillMaxWidth().padding(10.dp), onClick = {
-                        createCode.value = true
-                    }){
-                        Text("Сгенерировать ключ для входа")
+                    Column {
+                        Text(modifier = Modifier.fillMaxWidth().padding(10.dp) ,
+                            text= "Список сотрудников", textAlign = TextAlign.Center,
+                            style = TextStyle(
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            ))
+                        LazyColumn(Modifier.weight(1f)){
+                            items(userList){
+                                    user ->
+                                UserItem(user.login, selectedUser, userRight)
+                            }
+                        }
+                        Button(modifier = Modifier.fillMaxWidth().padding(10.dp), onClick = {
+                            createCode.value = true
+                        },
+                            colors = ButtonColors(
+                                contentColor = Color.White,
+                                containerColor = Color(40,100,206),
+                                disabledContentColor = Color(0,75,174),
+                                disabledContainerColor = Color(192,220,253)
+                            ),
+                            )
+                        {
+                            Text(
+                                text = "Сгенерировать ключ для входа",
+                                style = TextStyle(
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                            )
+                        }
                     }
                     if(createCode.value){
                         onCreateInviteCode.invoke()
@@ -101,15 +137,20 @@ fun SettingsBox(
                 }
             }else{
                 if(!selectedUser.value){
-                    onGetUserList.invoke()
+
                     Column(Modifier.padding(10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(modifier = Modifier.fillMaxWidth().padding(10.dp) ,
-                            text= "Список сотрудников", textAlign = TextAlign.Center)
+                            text= "Список сотрудников", textAlign = TextAlign.Center,
+                            style = TextStyle(
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
                         LazyColumn(Modifier.fillMaxSize()){
                             items(userList){
                                 user ->
-                                    UserItem(user.login, selectedUser, userRight)
+                                    UserRightItem(user.login, selectedUser, userRight)
                             }
                         }
                     }
@@ -140,10 +181,25 @@ fun UserItem(login: String, selectedUser: MutableState<Boolean>, userRight: Muta
     Row(Modifier.fillMaxWidth().clickable {
         selectedUser.value = true
         userRight.value = User(login, "")
-    },
-        horizontalArrangement = Arrangement.Center
+    }.padding(start = 100.dp, end = 100.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
     ){
-        Text(login)
+        Icon(
+            imageVector = Icons.Rounded.AccountCircle,
+            contentDescription = "Аватарка пользователя"
+        )
+        Text(
+            modifier = Modifier.padding(start = 10.dp).weight(1f),
+            text = login,
+            textAlign = TextAlign.Start
+        )
+        IconButton(onClick = {
+
+        }){
+            Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                contentDescription = "Выгнать пользователя")
+        }
     }
 }
 
@@ -159,12 +215,34 @@ fun RightItem(rightName: String, checked: MutableState<Boolean>){
     }
 }
 
+@Composable
+fun UserRightItem(login: String, selectedUser: MutableState<Boolean>, userRight: MutableState<User>){
+    Row(Modifier.fillMaxWidth().clickable {
+        selectedUser.value = true
+        userRight.value = User(login, "")
+    }.padding(start = 100.dp, end = 100.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        Icon(
+            imageVector = Icons.Rounded.AccountCircle,
+            contentDescription = "Аватарка пользователя"
+        )
+        Text(
+            modifier = Modifier.padding(start = 10.dp).weight(1f),
+            text = login,
+            textAlign = TextAlign.Start
+        )
+    }
+}
 @SuppressLint("UnrememberedMutableState")
 @Preview
 @Composable
 fun SettingsBoxPreview(){
     SettingsBox(
-        emptyList<User>().toMutableStateList(),
+        mutableStateListOf(
+            User("Admin","")
+        ),
         {},
         mutableStateOf(false),
         mutableStateOf(false),

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
@@ -35,9 +36,12 @@ import androidx.compose.runtime.traceEventEnd
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import okhttp3.internal.toImmutableList
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.BottomNavItem
@@ -75,7 +79,8 @@ fun HomeScreen(
     messageList: SnapshotStateList<MessageWithUser>,
     sendMessage: (TaskWithID, String) -> Unit,
     startGetMessage: (TaskWithID) -> Unit,
-    stopGetMessage: () -> Unit
+    stopGetMessage: () -> Unit,
+    onDeleteTask: (TaskWithID)->Unit
 ) {
     val selectedType = remember{ mutableStateOf("Calendar") }
     val selectedData = remember{ mutableStateOf("Month") }
@@ -193,7 +198,8 @@ fun HomeScreen(
                 }
                 if(selectedData.value == "Week"){
                     CustomCalendarWeek(currentYear = year,currentMonth = month, day = day,
-                        taskList = taskList, selectedData = selectedData, selectedUser = currentUser)
+                        taskList = taskList, selectedData = selectedData, selectedUser = currentUser,
+                        selectedTask = selectedTask, showShowTask = showShowTask, modifier = Modifier.weight(1f))
                 }
                 if(selectedData.value == "Day"){
                     Row{
@@ -274,14 +280,14 @@ fun HomeScreen(
                 LazyColumn(modifier = Modifier.border(1.dp, color = Color.Black)
                     .weight(1f)) {
                     items(taskList){ task ->
-                        var employees = false
+                        /*var employees = false
 
                         for(resp in task.responsiblePersons){
                          if(resp.login == currentUser.value.login) employees = true
                         }
-                        if(employees) {
+                        if(employees) {*/
                             TaskItemRow(task, showShowTask, selectedTask)
-                        }
+                        //}
                     }
                 }
             }
@@ -289,8 +295,21 @@ fun HomeScreen(
                 modifier = Modifier.padding(10.dp),
                 onClick = {
                 showCreateTask.value = true
-            }){
-                Text("Создать задачу")
+            },
+                colors = ButtonColors(
+                    contentColor = Color.White,
+                    containerColor = Color(40,100,206),
+                    disabledContentColor = Color(0,75,174),
+                    disabledContainerColor = Color(192,220,253)
+                )
+            ){
+                Text(
+                    text = "Создать задачу",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                )
             }
         }
         if(showCreateTask.value){
@@ -318,7 +337,8 @@ fun HomeScreen(
                 sendMessage = sendMessage,
                 accountUser = creatorUser,
                 message = message,
-                messageList = messageList
+                messageList = messageList,
+                onDeleteTask = onDeleteTask
             )
         }
     }
@@ -334,8 +354,8 @@ fun HomeScreenPreview() {
             Task(
                 name = "",
                 description = "",
-                beginTime = "",
-                endTime = "",
+                beginTime = "01 May 2025 23:00",
+                endTime = "02 May 2025 11:23",
                 priority = "",
                 percent = "",
                 file = ByteArray(0),
@@ -358,7 +378,8 @@ fun HomeScreenPreview() {
         messageList = emptyList<MessageWithUser>().toMutableStateList(),
         sendMessage = {taskWithID, str ->  },
         startGetMessage = {taskWithID -> },
-        stopGetMessage = {}
+        stopGetMessage = {},
+        onDeleteTask = {}
     )
 }
 // Сначала преобразуем строковые даты в удобный для сравнения формат

@@ -29,7 +29,7 @@ fun AddBPTaskItem(
             )
         }
         Text(
-            text = "Добавить БП"
+            text = "Добавить Задачу БП"
         )
     }
 }

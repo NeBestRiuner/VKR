@@ -38,6 +38,7 @@ import androidx.compose.foundation.clickable
 
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -45,6 +46,9 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import org.example.project.API.Data.LineAPI
 import org.example.project.API.Data.PostRectangleAPI
 import org.example.project.Model.Line
@@ -78,7 +82,14 @@ fun HierarchyBox(postRectangleList: SnapshotStateList<PostRectangle>,
 
         Column(Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,) {
-            Text("Иерархия бухгалтерии")
+            Text(
+                modifier = Modifier.padding(10.dp),
+                text = "Иерархия бухгалтерии",
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+            )
             Row(Modifier.fillMaxWidth()) {
                 PostDispenser(
                     postRectangleList = postRectangleList, isArrowed = isArrowed,
@@ -200,9 +211,22 @@ fun HierarchyBox(postRectangleList: SnapshotStateList<PostRectangle>,
                     prapi.printPRAPI()
                 }
                 sendHierarchy.invoke()
-            }
+            },
+                colors = ButtonColors(
+                    contentColor = Color.White,
+                    containerColor = Color(40,100,206),
+                    disabledContentColor = Color(0,75,174),
+                    disabledContainerColor = Color(192,220,253)
+                ),
+                modifier = Modifier.padding(10.dp)
             ){
-                Text("Сохранить изменения")
+                Text(
+                    text = "Сохранить изменения",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                )
             }
         }
         if(showAddPostCard.value){

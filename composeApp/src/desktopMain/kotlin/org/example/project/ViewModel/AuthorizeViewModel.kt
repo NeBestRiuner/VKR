@@ -1,5 +1,6 @@
 package org.example.project.ViewModel
 
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import org.example.project.API.Data.CreateUserResponse
@@ -13,7 +14,9 @@ import retrofit2.Response
 import java.net.SocketTimeoutException
 
 class AuthorizeViewModel:ViewModel() {
-    var user: UserSession? = null
+    var user = mutableStateOf(
+        UserSession("","","")
+    )
 
     var errorMessage = mutableStateOf("")
 
@@ -58,7 +61,7 @@ class AuthorizeViewModel:ViewModel() {
                     val result = response.body()
                     if (result != null) {
                         if(result.status=="200"){
-                            user = UserSession(login,password,result.authToken)
+                            user.value = UserSession(login,password,result.authToken)
                             onNavigateToMainMenu()
                         }
                     }

@@ -70,7 +70,7 @@ class MainDepartmentViewModel: ViewModel() {
                         val result = response.body()
                         if (result != null) {
                             if(result.status=="200"){
-                                departmentList.removeAll(departmentList)
+                                departmentList.clear()
                                 departmentList.addAll(result.departmentList)
                                 FilterDepartments("")
                             }
@@ -89,10 +89,10 @@ class MainDepartmentViewModel: ViewModel() {
     }
     fun FilterDepartments(newSearch: String){
         if(newSearch == ""){
-            filteredDepartmentList.removeAll(filteredDepartmentList)
+            filteredDepartmentList.clear()
             filteredDepartmentList.addAll(departmentList)
         }else{
-            filteredDepartmentList.removeAll(filteredDepartmentList)
+            filteredDepartmentList.clear()
             filteredDepartmentList.addAll(
                 departmentList.filter {
                                                 department ->

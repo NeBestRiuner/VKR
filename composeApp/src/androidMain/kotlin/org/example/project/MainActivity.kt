@@ -3,14 +3,11 @@ package org.example.project
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.toMutableStateList
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import org.example.project.API.Data.EnterDepartmentTokenResponse
 import org.example.project.Model.NavRoutes
 import org.example.project.Model.User
 import org.example.project.View.EnterScreen
@@ -41,6 +38,9 @@ class MainActivity : ComponentActivity() {
             val hierarchyViewModel = HierarchyViewModel()
             val calendarViewModel = CalendarViewModel()
             val businessProcessViewModel = BusinessProcessViewModel()
+
+
+
             NavHost(navController = navController, startDestination = NavRoutes.Enter.route){
                 composable(NavRoutes.Enter.route){
                     EnterScreen(
@@ -74,8 +74,8 @@ class MainActivity : ComponentActivity() {
                         onLeaveAccount = {
                             navController.popBackStack()
                             authorizeViewModel.user = null
-                            hierarchyViewModel.lineList.removeAll(hierarchyViewModel.lineList)
-                            hierarchyViewModel.postRectangleList.removeAll(hierarchyViewModel.postRectangleList)
+                            hierarchyViewModel.lineList.clear()
+                            hierarchyViewModel.postRectangleList.clear()
                         },
                         username = authorizeViewModel.user?.login ?: "Логин/Почта",
                         onProfileClick = {
@@ -247,6 +247,30 @@ class MainActivity : ComponentActivity() {
                                 accountsDepartment = taskManagerViewModel.selectedAccountsDepartment.value,
                                 postRectangleAPIList = hierarchyViewModel.postRectangleAPIList
                             )
+                        },
+                        onDeleteTask = {
+                            taskWithId ->
+                            calendarViewModel.deleteTask(
+                                authorizeViewModel.user,
+                                taskManagerViewModel.selectedAccountsDepartment.value,
+                                taskWithId
+                            )
+                        },
+                        onDeleteBPTask = {
+                            bpTask ->
+                                businessProcessViewModel.deleteBPTask(
+                                    accountsDepartment = taskManagerViewModel.selectedAccountsDepartment.value,
+                                    taskBP = bpTask,
+                                    user = authorizeViewModel.user
+                                )
+                        },
+                        onDeleteBusinessProcess = {
+                            businessProcess->
+                                businessProcessViewModel.deleteBusinessProcess(
+                                    accountsDepartment = taskManagerViewModel.selectedAccountsDepartment.value,
+                                    businessProcess = businessProcess,
+                                    user = authorizeViewModel.user
+                                )
                         }
                     )
                 }

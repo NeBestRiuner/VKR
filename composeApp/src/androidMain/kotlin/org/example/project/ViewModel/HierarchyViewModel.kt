@@ -62,8 +62,8 @@ class HierarchyViewModel: ViewModel() {
     fun loadPostRectangle( isArrowed: MutableState<Boolean>, secondDot: MutableState<Int>,
                                   firstDotRectangle: MutableState<PostRectangle>,
                            ){
-        postRectangleList.removeAll(postRectangleList)
-        lineList.removeAll(lineList)
+        postRectangleList.clear()
+        lineList.clear()
         for(prAPI in postRectangleAPIList){
             postRectangleList.add(
                 PostRectangle(
@@ -180,8 +180,8 @@ class HierarchyViewModel: ViewModel() {
                     val result = response.body()
                     if (result != null) {
                         if(result.status=="200"){
-                            postRectangleAPIList.removeAll(postRectangleAPIList)
-                            lineAPIList.removeAll(lineAPIList)
+                            postRectangleAPIList.clear()
+                            lineAPIList.clear()
                             if(result.postRectangleAPIList!=null){
                                 postRectangleAPIList.addAll(result.postRectangleAPIList)
                                 if(result.lineList!=null){

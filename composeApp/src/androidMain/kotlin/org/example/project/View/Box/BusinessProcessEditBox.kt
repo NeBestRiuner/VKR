@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,7 +49,9 @@ fun BusinessProcessEditBox(
     selectedBusinessProcess: MutableState<BusinessProcess>,
     postRectangleAPIList: SnapshotStateList<PostRectangleAPI>,
     businessProcessList: SnapshotStateList<BusinessProcess>,
-    updateBusinessProcess: ()->Unit
+    updateBusinessProcess: ()->Unit,
+    onDeleteBPTask: (BPTask)->Unit,
+    onDeleteBusinessProcess: (BusinessProcess)->Unit
 ){
     var bpStateTaskList = remember { selectedBusinessProcess.value.bpTaskList.sortedBy { it.position }.toMutableStateList() }
     var showBPTaskEditCard = remember{ mutableStateOf(false) }
@@ -81,6 +84,28 @@ fun BusinessProcessEditBox(
                 IconButton(onClick = leaveBPEdit, Modifier.padding(start = 10.dp)){
                     Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, "Кнопка назад")
                 }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ){
+                    IconButton(
+                        onClick = {
+                           /* for(bp in businessProcessList){
+                                if(bp.id == selectedBusinessProcess.value.id) {
+                                    businessProcessList.remove(bp)
+                                    break
+                                }
+                            }*/
+                            onDeleteBusinessProcess(selectedBusinessProcess.value)
+                            leaveBPEdit.invoke()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Удалить Бизнес-процесс"
+                        )
+                    }
+                }
             }
             Text(
                 text = "Структура бизнес-процесса",
@@ -106,7 +131,12 @@ fun BusinessProcessEditBox(
                                 onBPTaskClick = {
                                     showBPTaskEditCard.value = true
                                 },
-                                selectedBPTask = selectedBPTask
+                                selectedBPTask = selectedBPTask,
+                                onDeleteBPTask = {
+                                    bptaskL ->
+                                    bpStateTaskList.remove(bptaskL)
+                                    onDeleteBPTask(bptaskL)
+                                }
                             )
                     }
                 }
@@ -213,6 +243,8 @@ fun BusinessProcessEditBoxPreview(){
         },
         postRectangleAPIList = emptyList<PostRectangleAPI>().toMutableStateList(),
         businessProcessList = emptyList<BusinessProcess>().toMutableStateList(),
-        updateBusinessProcess = {}
+        updateBusinessProcess = {},
+        onDeleteBPTask = {},
+        onDeleteBusinessProcess = {}
     )
 }

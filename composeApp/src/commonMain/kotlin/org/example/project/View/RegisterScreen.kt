@@ -5,12 +5,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Button
+import androidx.compose.material3.Button
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
@@ -90,13 +92,25 @@ fun RegisterScreen(modifier: Modifier = Modifier, onNavigateToEnter: () -> Unit,
                         }
                     }
                 },
-                modifier = Modifier.padding(top = 40.dp)
+                modifier = Modifier.padding(top = 40.dp),
+                colors = ButtonColors(
+                    contentColor = Color.White,
+                    containerColor = Color(40,100,206),
+                    disabledContentColor = Color(0,75,174),
+                    disabledContainerColor = Color(192,220,253)
+                )
             ) {
                 Text("Регистрация")
             }
             Button(
                 onClick = { onNavigateToEnter() },
-                modifier = Modifier.padding(top = 40.dp)
+                modifier = Modifier.padding(top = 40.dp),
+                colors = ButtonColors(
+                    contentColor = Color.White,
+                    containerColor = Color(40,100,206),
+                    disabledContentColor = Color(0,75,174),
+                    disabledContainerColor = Color(192,220,253)
+                )
             ) {
                 Text("Перейти к входу")
             }

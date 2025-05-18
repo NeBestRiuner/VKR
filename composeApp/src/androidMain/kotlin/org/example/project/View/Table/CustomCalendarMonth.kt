@@ -116,6 +116,10 @@ fun CustomCalendar(
                         ) {
                             if (dayIndex >= firstDayOffset && dayCounter <= daysInMonth) {
                                 val curDay = dayCounter
+                                val lcalendar = Calendar.getInstance().apply {
+                                    set(year,month-1,dayCounter)
+                                }
+
                                 Surface(
                                     color = Color.Transparent,
                                     modifier = Modifier.fillMaxSize().clickable {
@@ -127,7 +131,10 @@ fun CustomCalendar(
                                         Text(
                                             text = dayCounter.toString(),
                                             fontSize = 14.sp,
-                                            modifier = Modifier.padding(4.dp)
+                                            modifier = Modifier.padding(4.dp),
+                                            color = if (lcalendar.get(Calendar.DAY_OF_WEEK).let {
+                                                    it == Calendar.SATURDAY || it == Calendar.SUNDAY
+                                                }) Color.Red else Color.Black
                                         )
                                         if(dayTaskCountList[dayCounter-1]>0){
                                             Row(

@@ -9,8 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -34,7 +37,8 @@ fun BPTaskItemRow(
     modifier: Modifier = Modifier,
     bpTask: BPTask,
     onBPTaskClick: ()->Unit,
-    selectedBPTask: MutableState<BPTask>
+    selectedBPTask: MutableState<BPTask>,
+    onDeleteBPTask: (BPTask)->Unit
 ){
     Row(
         modifier = modifier.padding(10.dp).clickable {
@@ -43,7 +47,7 @@ fun BPTaskItemRow(
         },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
-    ){
+    ) {
         // Кружок с числом
         Box(
             contentAlignment = Alignment.Center,
@@ -59,9 +63,19 @@ fun BPTaskItemRow(
             )
         }
         Text(
-            modifier = Modifier.padding(start = 10.dp),
-            text =  bpTask.name
+            modifier = Modifier.padding(start = 10.dp).weight(1f),
+            text = bpTask.name
         )
+        IconButton(
+            onClick = {
+                onDeleteBPTask(bpTask)
+            }
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = "Иконка удалить задачу БП"
+            )
+        }
     }
 }
 
@@ -104,6 +118,7 @@ fun BPTaskItemRowPreview(){
                     responsiblePost = "Бухгалтеры"
                 )
             )
-        }
+        },
+        onDeleteBPTask = {}
     )
 }

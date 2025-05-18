@@ -30,7 +30,9 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
@@ -42,6 +44,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.compose.AppTheme
 import org.example.project.API.Data.LineAPI
 import org.example.project.API.Data.PostRectangleAPI
 import org.example.project.Model.AccountsDepartment
@@ -104,7 +107,10 @@ fun TaskManagerScreen(
     getBusinessProcess: () -> Unit,
     selectedBusinessProcess: MutableState<BusinessProcess>,
     updateBusinessProcess: ()->Unit,
-    runBusinessProcess: ()->Unit
+    runBusinessProcess: ()->Unit,
+    onDeleteTask: (TaskWithID)->Unit,
+    onDeleteBPTask: (BPTask) -> Unit,
+    onDeleteBusinessProcess: (BusinessProcess)->Unit
 
 ){
     val navController = rememberNavController()
@@ -114,13 +120,20 @@ fun TaskManagerScreen(
     ) { innerPadding ->
         Column{
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth().height(60.dp).background(Color.LightGray)){
+                modifier = Modifier.fillMaxWidth().height(60.dp).background(Color(0,75,174))){
                 IconButton(onClick = onLeaveDepartment) {
-                    Icon(imageVector = Icons.Filled.Close, contentDescription = "Кнопка выхода")
+                    Icon(imageVector = Icons.Filled.Close, contentDescription = "Кнопка выхода",
+                        tint = Color.White)
                 }
-                Text(currentDepartment.name)
+                Text(currentDepartment.name, style = TextStyle(
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                )
                 IconButton(onClick = {}) {
-                    Icon(imageVector = Icons.Filled.Notifications, contentDescription = "Уведомления")
+                    Icon(imageVector = Icons.Filled.Notifications, contentDescription = "Уведомления",
+                        tint = Color.White)
                 }
             }
             Box(modifier = Modifier.padding(innerPadding)) {
@@ -159,7 +172,10 @@ fun TaskManagerScreen(
                     getBusinessProcess = getBusinessProcess,
                     selectedBusinessProcess = selectedBusinessProcess,
                     updateBusinessProcess = updateBusinessProcess,
-                    runBusinessProcess = runBusinessProcess
+                    runBusinessProcess = runBusinessProcess,
+                    onDeleteTask = onDeleteTask,
+                    onDeleteBPTask = onDeleteBPTask,
+                    onDeleteBusinessProcess = onDeleteBusinessProcess
                 )
             }
         }
@@ -179,12 +195,14 @@ fun BottomNavigationBar(navController: NavController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    BottomNavigation {
+    BottomNavigation(
+        backgroundColor = Color(0,75,174)
+    ) {
         items.forEach { item ->
             BottomNavigationItem(
-                icon = { Icon(item.icon, contentDescription = item.title) },
+                icon = { Icon(item.icon, contentDescription = item.title, tint = Color.White) },
                 label = { Text(item.title, style = TextStyle(fontSize = 12.sp,
-                    textAlign = TextAlign.Center) ) },
+                    textAlign = TextAlign.Center, color = Color.White) ) },
                 selected = currentRoute == item.route,
                 onClick = {
                     navController.navigate(item.route) {
@@ -236,7 +254,10 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                     getBusinessProcess: () -> Unit,
                     selectedBusinessProcess: MutableState<BusinessProcess>,
                     updateBusinessProcess: ()->Unit,
-                    runBusinessProcess: ()->Unit
+                    runBusinessProcess: ()->Unit,
+                    onDeleteTask: (TaskWithID)->Unit,
+                    onDeleteBPTask: (BPTask)->Unit,
+                    onDeleteBusinessProcess: (BusinessProcess)->Unit
 ) {
 
     NavHost(
@@ -257,7 +278,8 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
             messageList = messageList,
             sendMessage = sendMessage,
             startGetMessage = startGetMessage,
-            stopGetMessage = stopGetMessage
+            stopGetMessage = stopGetMessage,
+            onDeleteTask = onDeleteTask
         ) }
         composable(BottomNavItem.Hierarchy.route) {
             var isArrowed = remember { mutableStateOf(false) }
@@ -300,6 +322,7 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
         }
         composable(BottomNavItem.Analytic.route) { AnalyticBox() }
         composable(BottomNavItem.Settings.route) {
+            onGetUserList.invoke()
             SettingsBox(
                 userList = userList,
                 onGetUserList = onGetUserList,
@@ -329,7 +352,9 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
                 updateBusinessProcess = {
                     navController.popBackStack()
                     updateBusinessProcess.invoke()
-                }
+                },
+                onDeleteBPTask = onDeleteBPTask,
+                onDeleteBusinessProcess = onDeleteBusinessProcess
             )
         }
 
@@ -348,6 +373,9 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
 @Composable
 @Preview
 fun TaskManagerScreenProfile(){
+    AppTheme {
+
+
     TaskManagerScreen(
         {},
         AccountsDepartment(-1,"","","",3),
@@ -429,6 +457,10 @@ fun TaskManagerScreenProfile(){
             )
         },
         updateBusinessProcess = {},
-        runBusinessProcess = {}
+        runBusinessProcess = {},
+        onDeleteTask = {},
+        onDeleteBPTask = {},
+        onDeleteBusinessProcess = {}
     )
+    }
 }

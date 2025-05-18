@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -36,6 +38,8 @@ import org.example.project.Model.Enums.RusDay
 import org.example.project.Model.Enums.RusMonth
 import org.example.project.Model.TaskWithID
 import org.example.project.Model.User
+import org.example.project.View.Box.isDateInRange
+import org.example.project.View.Item.TaskItemRow
 
 
 import java.time.DayOfWeek
@@ -51,115 +55,13 @@ fun CustomCalendarWeek(
     modifier: Modifier = Modifier,
     taskList: SnapshotStateList<TaskWithID>,
     selectedData: MutableState<String>,
-    selectedUser: MutableState<User>
+    selectedUser: MutableState<User>,
+    selectedTask: MutableState<TaskWithID>,
+    showShowTask: MutableState<Boolean>
 ) {
-    /*
-    // Получаем календарь для указанного года и месяца
-    val calendar = Calendar.getInstance().apply {
-        set(year, month - 1, 1)
-    }
-
-    // Определяем первый день месяца и сколько дней в месяце
-    val firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-    val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-
-    // Корректируем день недели (у нас неделя начинается с понедельника)
-    val firstDayOffset = if (firstDayOfWeek == Calendar.SUNDAY) 6 else firstDayOfWeek - Calendar.MONDAY
-
-    var dI = 1
-    var dayTaskCountList = emptyList<Int>().toMutableStateList()
-    while(dI <= daysInMonth){
-        dayTaskCountList.add(dayCountTask(taskList,dI,year,month, selectedUser))
-        dI++
-    }
-
-    Column(modifier = modifier.padding(10.dp)) {
-        // Строка с днями недели
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Получаем сокращенные названия дней недели
-            val daysOfWeek = DayOfWeek.values()
-            daysOfWeek.forEach { dayOfWeek ->
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        Text(
-                            text = RusDay.fromInt(dayOfWeek.value).shortName,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Сетка календаря ( по 7 дней)
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            var dayCounter = 1
-            repeat(1) { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    repeat(7) { column ->
-                        val dayIndex = row * 7 + column
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                                .padding(2.dp)
-                                .border(BorderStroke(1.dp,Color.Black))
-                            ,
-                            contentAlignment = Alignment.TopStart
-                        ) {
-                            if (dayIndex >= firstDayOffset && dayCounter <= daysInMonth) {
-                                val curDay = dayCounter
-                                Surface(
-                                    color = Color.Transparent,
-                                    modifier = Modifier.fillMaxSize().clickable {
-                                        day.value = curDay
-                                        selectedData.value = "Day"
-                                    }
-                                ) {
-                                    Column {
-                                        Text(
-                                            text = dayCounter.toString(),
-                                            fontSize = 14.sp,
-                                            modifier = Modifier.padding(4.dp)
-                                        )
-
-                                    }
-
-                                }
-                                dayCounter++
-                            }else{
-                                Surface(
-                                    color = Color.LightGray,
-                                    modifier = Modifier.fillMaxSize()
-                                ){
-
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }*/
     val calendar = Calendar.getInstance().apply {
         set(currentYear.value, currentMonth.value - 1, 1)
     }
-   // val currentMonth = remember { mutableStateOf(month.value) }
-  //  val currentYear = remember { mutableStateOf(year.value) }
 
     // Вычисляем дни для отображения (неделя + соседние дни для плавного скролла)
     val visibleDays = remember(currentMonth.value, currentYear.value) {
@@ -168,6 +70,7 @@ fun CustomCalendarWeek(
 
     val listState = rememberLazyListState()
 
+    val selectedDay = remember { mutableStateOf(day.value) }
     // Отслеживаем прокрутку для обновления месяца
     LaunchedEffect(listState.firstVisibleItemIndex) {
         val firstVisibleDate = visibleDays[listState.firstVisibleItemIndex + 3] // Берем центральный день
@@ -179,39 +82,7 @@ fun CustomCalendarWeek(
     }
 
     Column(modifier = modifier.padding(10.dp)) {
-        // Название месяца и года
-        /*
-        Text(
-            text = "${RusMonth.fromInt(currentMonth.value).name} ${currentYear.value}",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Строка с днями недели
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            DayOfWeek.values().forEach { dayOfWeek ->
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        Text(
-                            text = RusDay.fromInt(dayOfWeek.value).shortName,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            }
-        }
-        */
         Spacer(modifier = Modifier.height(8.dp))
 
         // Горизонтально прокручиваемая строка с днями
@@ -240,20 +111,33 @@ fun CustomCalendarWeek(
                         modifier = Modifier
                             .size(48.dp)
                             .border(1.dp, if (isCurrentMonth) Color.Black else Color.LightGray)
-                            .background(if (isCurrentMonth) Color.Transparent else Color.LightGray.copy(alpha = 0.3f))
+                            .background(if (isCurrentMonth){
+                                if(dayNumber==selectedDay.value){
+                                    Color.LightGray
+                                }else{
+                                    Color.Transparent
+                                }
+                            }else Color.LightGray.copy(alpha = 0.3f))
                             .clickable {
                                 if (isCurrentMonth) {
                                     day.value = dayNumber
-                                    selectedData.value = "Day"
+                                    selectedDay.value = dayNumber
                                 }
                             },
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            val lcl = Calendar.getInstance().apply {
+                                set(currentYear.value,currentMonth.value-1,dayNumber)
+                            }
                             Text(
                                 text = dayNumber.toString(),
                                 fontSize = 14.sp,
-                                color = if (isCurrentMonth) Color.Black else Color.Gray
+                                color = if (isCurrentMonth){
+                                    if(lcl.get(Calendar.DAY_OF_WEEK).let {
+                                            it == Calendar.SATURDAY || it == Calendar.SUNDAY
+                                        })Color.Red else Color.Black
+                                }else Color.Gray
                             )
                             // Можно добавить количество задач для этого дня
                             val taskCount = dayCountTask(taskList, dayNumber, dayYear, dayMonth, selectedUser)
@@ -268,6 +152,34 @@ fun CustomCalendarWeek(
                     }
                 }
 
+            }
+        }
+        LazyColumn(
+            modifier = Modifier.weight(1f)
+        ) {
+            items(taskList){ task ->
+                if(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        isDateInRange(
+                            taskBeginTime = task.beginTime,
+                            taskEndTime = task.endTime,
+                            year = currentYear.value,
+                            month = currentMonth.value,
+                            day = day.value
+                        )
+                    } else {
+                        TODO("VERSION.SDK_INT < O")
+                    }
+                ){
+                    var employees = false
+
+                    for(resp in task.responsiblePersons){
+                        if(resp.login == selectedUser.value.login) employees = true
+                    }
+                    if(employees) {
+                        TaskItemRow(task, showShowTask, selectedTask)
+                    }
+
+                }
             }
         }
     }
@@ -326,8 +238,8 @@ fun CalendarWeekPreview() {
                 TaskWithID(
                     id = 0,
                     name = "Разработка нового фича",
-                    beginTime = "01 Mart 2023 23:00",
-                    endTime = "15 Mart 2023 11:23",
+                    beginTime = "01 May 2025 23:00",
+                    endTime = "15 May 2025 11:23",
                     priority = "5",
                     percent = "0",
                     description = "",
@@ -339,6 +251,25 @@ fun CalendarWeekPreview() {
             )
         },
         selectedData = remember { mutableStateOf("Month") },
-        selectedUser = remember { mutableStateOf(User("","")) }
+        selectedUser = remember { mutableStateOf(User("","")) },
+        selectedTask = remember { mutableStateOf(
+            TaskWithID(
+                id = 0,
+                name = "Разработка нового фича",
+                beginTime = "01 May 2025 23:00",
+                endTime = "15 May 2025 11:23",
+                priority = "5",
+                percent = "0",
+                description = "",
+                file = ByteArray(0),
+                responsiblePersons = emptyList<User>().toMutableList(),
+                creatorUser = User("", ""),
+                completed = false
+        )) },
+        showShowTask = remember {
+            mutableStateOf(
+                false
+            )
+        }
     )
 }

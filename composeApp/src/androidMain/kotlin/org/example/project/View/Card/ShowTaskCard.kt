@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -76,7 +77,8 @@ fun ShowTaskCard(
     sendMessage: (TaskWithID, String) -> Unit,
     accountUser: MutableState<User>,
     message: MutableState<Message>,
-    messageList: SnapshotStateList<MessageWithUser>
+    messageList: SnapshotStateList<MessageWithUser>,
+    onDeleteTask:(TaskWithID)->Unit
 ){
     var messageText = remember { mutableStateOf("") }
     var executor = false
@@ -111,6 +113,23 @@ fun ShowTaskCard(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Стрелка назад"
                     )
+                }
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.End
+                    ){
+                    if (accountUser.value.login == task.creatorUser.login)
+                    IconButton(
+                        onClick = {
+                            onDeleteTask.invoke(task)
+                            onDismiss.invoke()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Кнопка удалить задание"
+                        )
+                    }
                 }
             }
             Column(modifier = Modifier
@@ -326,32 +345,52 @@ fun ShowTaskCard(
                         )
                     }
                 }else{
-                    //UI для создателя
-                    Row{
-                        Button(
-                            modifier = Modifier.weight(1f).padding(5.dp),
-                            onClick = {
-                                task.completed = false
-                                task.percent = "0"
-                                updateTask(task)
-                                onDismiss()
+
+                    if(task.completed){
+                        // UI для принятого задания Создатель
+                        if(task.creatorUser.login == accountUser.value.login) {
+                            Button(
+                                modifier = Modifier.padding(10.dp),
+                                onClick ={
+                                    task.completed=false
+                                    task.percent="0"
+                                    updateTask(task)
+                                    onDismiss.invoke()
+                                }
+                            ){
+                                Text("Отозвать принятие")
                             }
-                        ){
-                            Text("Отклонить")
                         }
-                        Button(
-                            modifier = Modifier.weight(1f).padding(5.dp),
-                            onClick = {
-                                task.completed = true
-                                task.percent = "100"
-                                updateTask(task)
-                                onDismiss()
+                        // UI для принятого задания Исполнитель
+
+                    }else{
+                        //UI для создателя для принятия
+                        Row{
+                            Button(
+                                modifier = Modifier.weight(1f).padding(5.dp),
+                                onClick = {
+                                    task.completed = false
+                                    task.percent = "0"
+                                    updateTask(task)
+                                    onDismiss()
+                                }
+                            ){
+                                Text("Отклонить")
                             }
-                        ){
-                            Text(
-                                text = "Принять",
-                                textAlign = TextAlign.Center
-                            )
+                            Button(
+                                modifier = Modifier.weight(1f).padding(5.dp),
+                                onClick = {
+                                    task.completed = true
+                                    task.percent = "100"
+                                    updateTask(task)
+                                    onDismiss()
+                                }
+                            ){
+                                Text(
+                                    text = "Принять",
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
                 }
@@ -393,6 +432,9 @@ fun ShowTaskCardPreview(){
                 createDate = "10 May 2025 08:41"
             )
         )
+        },
+        onDeleteTask = {
+
         }
     )
 }

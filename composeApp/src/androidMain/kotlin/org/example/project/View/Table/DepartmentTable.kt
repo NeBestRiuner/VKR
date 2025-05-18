@@ -39,7 +39,7 @@ fun DepartmentTable(modifier: Modifier = Modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
         Row(
-            modifier = modifier.background(Color.LightGray).
+            modifier = modifier.background(Color(color = 0xFF87CEFA)).
             height(50.dp).drawWithContent {
                 drawContent()
                 val strokeWidth = 1.0f

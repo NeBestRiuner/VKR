@@ -38,7 +38,7 @@ class TaskManagerViewModel: ViewModel() {
                     val result = response.body()
                     if (result != null) {
                         if(result.status=="200"){
-                            employeeList.removeAll(employeeList)
+                            employeeList.clear()
                             employeeList.addAll(result.userList)
                         }
                     }

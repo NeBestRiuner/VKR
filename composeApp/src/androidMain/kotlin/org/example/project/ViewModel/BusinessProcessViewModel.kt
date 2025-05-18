@@ -4,6 +4,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.toMutableStateList
 import org.example.project.API.Data.CreateBusinessProcessRequest
 import org.example.project.API.Data.CreateBusinessProcessResponse
+import org.example.project.API.Data.DeleteBPRequest
+import org.example.project.API.Data.DeleteBPResponse
+import org.example.project.API.Data.DeleteBPTaskRequest
+import org.example.project.API.Data.DeleteBPTaskResponse
+import org.example.project.API.Data.DeleteTaskRequest
+import org.example.project.API.Data.DeleteTaskResponse
 import org.example.project.API.Data.GetBusinessProcessResponse
 import org.example.project.API.Data.PostRectangleAPI
 import org.example.project.API.Data.RunBusinessProcessRequest
@@ -16,6 +22,7 @@ import org.example.project.API.RetrofitClient.apiService
 import org.example.project.Model.AccountsDepartment
 import org.example.project.Model.BPTask
 import org.example.project.Model.BusinessProcess
+import org.example.project.Model.TaskWithID
 import org.example.project.Model.UserSession
 import retrofit2.Call
 import retrofit2.Callback
@@ -80,9 +87,7 @@ class BusinessProcessViewModel {
                     val result = response.body()
                     if (result != null) {
                         if(result.status=="200"){
-                            businessProcessList.removeAll(
-                                businessProcessList.toList()
-                            )
+                            businessProcessList.clear()
                             businessProcessList.addAll(
                                 result.businessProcessList
                             )
@@ -155,6 +160,67 @@ class BusinessProcessViewModel {
             }
 
             override fun onFailure(call: Call<RunBusinessProcessResponse>, t: Throwable) {
+                // Обработка ошибки сети
+            }
+        })
+    }
+    fun deleteBPTask(user: UserSession?, accountsDepartment: AccountsDepartment, taskBP: BPTask){
+        val token = user?.token
+        val call = apiService.deleteBPTask(
+            "Bearer $token",
+            DeleteBPTaskRequest(
+                accountsDepartment,
+                taskBP
+            )
+        )
+
+        call.enqueue(object : Callback<DeleteBPTaskResponse> {
+            override fun onResponse(call: Call<DeleteBPTaskResponse>, response: Response<DeleteBPTaskResponse>) {
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    if (result != null) {
+                        if(result.status=="200"){
+
+                        }
+                    }
+                    // Обработка успешного ответа
+                } else {
+                    // Обработка ошибки
+                }
+            }
+
+            override fun onFailure(call: Call<DeleteBPTaskResponse>, t: Throwable) {
+                // Обработка ошибки сети
+            }
+        })
+    }
+    fun deleteBusinessProcess(user: UserSession?, accountsDepartment: AccountsDepartment,
+                              businessProcess: BusinessProcess){
+        val token = user?.token
+        val call = apiService.deleteBusinessProcess(
+            "Bearer $token",
+            DeleteBPRequest(
+                accountsDepartment,
+                businessProcess
+            )
+        )
+
+        call.enqueue(object : Callback<DeleteBPResponse> {
+            override fun onResponse(call: Call<DeleteBPResponse>, response: Response<DeleteBPResponse>) {
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    if (result != null) {
+                        if(result.status=="200"){
+
+                        }
+                    }
+                    // Обработка успешного ответа
+                } else {
+                    // Обработка ошибки
+                }
+            }
+
+            override fun onFailure(call: Call<DeleteBPResponse>, t: Throwable) {
                 // Обработка ошибки сети
             }
         })

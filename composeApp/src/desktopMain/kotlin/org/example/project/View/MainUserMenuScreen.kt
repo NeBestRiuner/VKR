@@ -1,6 +1,7 @@
 package org.example.project.View
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -35,70 +38,93 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.Model.AccountsDepartment
+import org.example.project.Model.UserSession
 import org.example.project.View.Card.EnterDepartmentCard
 import org.example.project.View.Card.PopupCard
 import org.example.project.View.Table.DepartmentTable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-fun MainUserMenuScreen(
-    modifier: Modifier = Modifier,
-    onCreateDepartment :(String) -> Unit,
-    departmentList: SnapshotStateList<AccountsDepartment>,
-    onLeaveAccount: ()->Unit,
-    username:String,
-    onProfileClick: ()->Unit,
-    onGetDepartmentList: ()->Unit,
-    onOpenDepartment: ()-> Unit,
-    searchString: MutableState<String>,
-    filterDepartments: (String)->Unit,
-    selectDepartment: (AccountsDepartment)->Unit,
-    onEnterDepartment: (String)->Unit
+fun MainUserMenuScreen(modifier: Modifier = Modifier,
+                       onCreateDepartment :(String) -> Unit,
+                       departmentList: SnapshotStateList<AccountsDepartment>,
+                       onLeaveAccount: ()->Unit,
+                       username:MutableState<UserSession>,
+                       onProfileClick: ()->Unit,
+                       onGetDepartmentList: ()->Unit,
+                       onOpenDepartment: ()-> Unit,
+                       searchString: MutableState<String>,
+                       filterDepartments: (String)->Unit,
+                       selectDepartment: (AccountsDepartment)->Unit,
+                       onEnterDepartment: (String)->Unit
 ){
     var showCard by remember { mutableStateOf(false) }
     var enterDepartmentCard by remember{ mutableStateOf(false) }
+    println(username.value.login +" author name in Screen")
     Box(){
         Row(
             modifier.fillMaxWidth()
                 .padding(10.dp)
-                .border(1.dp, color = Color.Black),
+                .border(1.dp, color = Color.Black)
+                .background(color = Color(0,75,174)),
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.SpaceAround,
         ){
-            Image(imageVector = Icons.Rounded.AccountCircle,
+            androidx.compose.material3.Icon(
+                imageVector = Icons.Rounded.AccountCircle,
                 contentDescription = "Иконка профиля",
-                modifier = modifier.padding(top=4.dp, bottom = 4.dp).size(36.dp).clickable(
+                modifier = modifier.padding(top = 4.dp, bottom = 4.dp).size(36.dp).clickable(
                     onClick = onProfileClick
-                ))
-            Text(text=username,
-                modifier = modifier.padding(top=12.dp, bottom = 10.dp).clickable(
+                ), tint = Color.White
+            )
+            androidx.compose.material3.Text(
+                text = username.value.login,
+                modifier = modifier.padding(top = 12.dp, bottom = 10.dp).clickable(
                     onClick = onProfileClick
                 ),
-                fontSize = 16.sp)
-            Image(imageVector = Icons.Filled.Close,
+                fontSize = 16.sp,
+                color = Color.White
+            )
+            androidx.compose.material3.Icon(
+                imageVector = Icons.Filled.Close,
                 contentDescription = "Выйти из аккаунта",
-                modifier = modifier.padding(top=10.dp, bottom = 10.dp).clickable(
+                modifier = modifier.padding(top = 10.dp, bottom = 10.dp).clickable(
                     onClick = onLeaveAccount
-                ))
+                ),
+                tint = Color.White
+            )
         }
         Column(modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center) {
-            TextField(value = searchString.value,
-                onValueChange = {
-                        newSearch -> searchString.value = newSearch
+            androidx.compose.material3.TextField(
+                value = searchString.value,
+                onValueChange = { newSearch ->
+                    searchString.value = newSearch
                     filterDepartments(newSearch)
                 },
-                label={Text("Поиск")},
-                modifier = modifier.padding(10.dp))
+                label = { androidx.compose.material3.Text("Поиск") },
+                modifier = modifier.padding(10.dp)
+            )
             Row{
-                Text("Список бухгалтерий",
+                androidx.compose.material3.Text(
+                    "Список бухгалтерий",
                     modifier = modifier.padding(10.dp),
                     fontWeight = FontWeight(700),
                     fontSize = 20.sp
                 )
-                IconButton(onClick = onGetDepartmentList){
-                    Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Обновить список")
+                androidx.compose.material3.IconButton(
+                    onClick = onGetDepartmentList, colors = IconButtonColors(
+                        contentColor = Color.White,
+                        containerColor = Color(40, 100, 206),
+                        disabledContentColor = Color(0, 75, 174),
+                        disabledContainerColor = Color(192, 220, 253)
+                    )
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = "Обновить список"
+                    )
                 }
             }
             DepartmentTable(departmentList = departmentList,
@@ -106,21 +132,33 @@ fun MainUserMenuScreen(
                 selectDepartment = selectDepartment
             )
             Row {
-                Button(
+                androidx.compose.material3.Button(
                     onClick = {
                         showCard = true
                     },
-                    modifier = modifier.padding(15.dp)
+                    modifier = modifier.padding(15.dp),
+                    colors = ButtonColors(
+                        contentColor = Color.White,
+                        containerColor = Color(40, 100, 206),
+                        disabledContentColor = Color(0, 75, 174),
+                        disabledContainerColor = Color(192, 220, 253)
+                    )
                 ) {
-                    Text("Создать бухгалтерию")
+                    androidx.compose.material3.Text("Создать бухгалтерию")
                 }
-                Button(
+                androidx.compose.material3.Button(
                     onClick = {
                         enterDepartmentCard = true
                     },
-                    modifier = modifier.padding(15.dp)
+                    modifier = modifier.padding(15.dp),
+                    colors = ButtonColors(
+                        contentColor = Color.White,
+                        containerColor = Color(40, 100, 206),
+                        disabledContentColor = Color(0, 75, 174),
+                        disabledContainerColor = Color(192, 220, 253)
+                    )
                 ) {
-                    Text("Войти по коду")
+                    androidx.compose.material3.Text("Войти по коду")
                 }
             }
         }
@@ -147,7 +185,7 @@ fun MainUserMenuScreenPreview(){
         onCreateDepartment = {str ->},
         departmentList = emptyList<AccountsDepartment>().toMutableStateList(),
         onLeaveAccount = {},
-        username = "Admin",
+        username = mutableStateOf(UserSession("Admin","","")),
         onProfileClick = {},
         onGetDepartmentList = {},
         onOpenDepartment = {},

@@ -30,9 +30,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.TextField
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -45,8 +47,10 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -79,25 +83,28 @@ fun MainUserMenuScreen(modifier: Modifier = Modifier,
             Row(
                 modifier.fillMaxWidth()
                     .padding(10.dp)
-                    .border(1.dp, color = Color.Black),
+                    .border(1.dp, color = Color.Black)
+                    .background(color = Color(0,75,174)),
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceAround,
             ){
-                Image(imageVector = Icons.Rounded.AccountCircle,
+                Icon(imageVector = Icons.Rounded.AccountCircle,
                     contentDescription = "Иконка профиля",
                     modifier = modifier.padding(top=4.dp, bottom = 4.dp).size(36.dp).clickable(
                         onClick = onProfileClick
-                    ))
+                    ), tint = Color.White)
                 Text(text=username,
                     modifier = modifier.padding(top=12.dp, bottom = 10.dp).clickable(
                         onClick = onProfileClick
                     ),
-                    fontSize = 16.sp)
-                Image(imageVector = Icons.Filled.Close,
+                    fontSize = 16.sp,
+                    color = Color.White)
+                Icon(imageVector = Icons.Filled.Close,
                     contentDescription = "Выйти из аккаунта",
                     modifier = modifier.padding(top=10.dp, bottom = 10.dp).clickable(
                         onClick = onLeaveAccount
-                    ))
+                    ),
+                    tint = Color.White)
             }
             Column(modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -115,7 +122,12 @@ fun MainUserMenuScreen(modifier: Modifier = Modifier,
                         fontWeight = FontWeight(700),
                         fontSize = 20.sp
                     )
-                    IconButton(onClick = onGetDepartmentList){
+                    IconButton(onClick = onGetDepartmentList, colors = IconButtonColors(
+                        contentColor = Color.White,
+                        containerColor = Color(40,100,206),
+                        disabledContentColor = Color(0,75,174),
+                        disabledContainerColor = Color(192,220,253)
+                    )){
                         Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Обновить список")
                     }
                 }
@@ -128,7 +140,13 @@ fun MainUserMenuScreen(modifier: Modifier = Modifier,
                         onClick = {
                             showCard = true
                         },
-                        modifier = modifier.padding(15.dp)
+                        modifier = modifier.padding(15.dp),
+                        colors = ButtonColors(
+                            contentColor = Color.White,
+                            containerColor = Color(40,100,206),
+                            disabledContentColor = Color(0,75,174),
+                            disabledContainerColor = Color(192,220,253)
+                        )
                     ) {
                         Text("Создать бухгалтерию")
                     }
@@ -136,7 +154,13 @@ fun MainUserMenuScreen(modifier: Modifier = Modifier,
                         onClick = {
                             enterDepartmentCard = true
                         },
-                        modifier = modifier.padding(15.dp)
+                        modifier = modifier.padding(15.dp),
+                        colors = ButtonColors(
+                            contentColor = Color.White,
+                            containerColor = Color(40,100,206),
+                            disabledContentColor = Color(0,75,174),
+                            disabledContainerColor = Color(192,220,253)
+                        )
                     ) {
                         Text("Войти по коду")
                     }
