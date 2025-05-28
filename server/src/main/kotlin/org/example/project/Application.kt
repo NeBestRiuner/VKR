@@ -11,6 +11,10 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.receive
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.example.project.API.AccountsDepartmentAPI
@@ -58,6 +62,8 @@ import java.net.URLDecoder
 import java.time.Instant.now
 import org.example.project.API.CreateTaskRequest
 import org.example.project.API.CreateTaskResponse
+import org.example.project.API.DeleteAccountantRequest
+import org.example.project.API.DeleteAccountantResponse
 import org.example.project.API.DeleteBPRequest
 import org.example.project.API.DeleteBPResponse
 import org.example.project.API.DeleteBPTaskRequest
@@ -81,6 +87,7 @@ import org.example.project.API.UpdateTaskResponse
 import org.example.project.model.BPTask
 import org.example.project.model.BusinessProcess
 import org.example.project.model.Bytes
+import org.example.project.model.FullTask
 import org.example.project.model.MessageWithUser
 import org.example.project.model.Task
 import org.example.project.model.TaskWithId
@@ -90,6 +97,8 @@ import org.example.project.tables.BusinessProcessTaskTable
 import org.example.project.tables.EmployeeTaskTable
 import org.example.project.tables.TaskMessageTable
 import org.example.project.tables.TaskTable
+import org.jetbrains.exposed.sql.Join
+import org.jetbrains.exposed.sql.or
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -107,6 +116,7 @@ fun Application.module() {
     }
     configureSecurity()
     configureDatabase()
+    startBackgroundTask()
     routing {
 
         get("/HelloWorld/") {
@@ -776,8 +786,8 @@ fun Application.module() {
                         )
                     }.map { row ->
                         row[AccountsDepartmentTable.id]
-                    }
-                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){ // юзер-создатель, тот для кого ищём таски
+                    }// получение id бухгалтерии
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
                         (UserTable.id eq AccountsEmployeeTable.userId).and(
                             UserTable.login eq selectedUser.login).and(
                             AccountsEmployeeTable.departmentId eq departmentIdList[0]
@@ -785,7 +795,7 @@ fun Application.module() {
                     }.selectAll().map{
                             row ->
                         row[AccountsEmployeeTable.id]
-                    }
+                    }// id бухгалтера, для кого ищём таски
                     var taskIdHashSet = HashSet<Int>()
                     var taskList = emptyList<TaskWithId>().toMutableList()
                     if(creatorIdList.isNotEmpty()
@@ -823,6 +833,7 @@ fun Application.module() {
                                             completed = row[TaskTable.completed]
                                         )
                                     )
+                                    println("Выполнили код по добавлению задачи, где ты создатель")
                                 }
                         }// блок кода до - выбрали всех создателей
                         TaskTable.join(EmployeeTaskTable, joinType = JoinType.INNER){
@@ -831,6 +842,7 @@ fun Application.module() {
                             )
                         }.selectAll().map{
                             row ->
+                            println("Попытка добавить задачу, где ты исполнитель, но не создатель")
                                 if(!taskIdHashSet.contains(row[TaskTable.id].value)){
                                     taskIdHashSet.add(row[TaskTable.id].value)
                                     taskList.add(
@@ -856,22 +868,22 @@ fun Application.module() {
                                                     ""
                                                 )
                                             }.toMutableList(),
-                                            creatorUser = TaskTable.join(AccountsEmployeeTable, JoinType.INNER){
-                                                (TaskTable.creatorId eq AccountsEmployeeTable.id).and(
-                                                    EmployeeTaskTable.taskId eq row[TaskTable.id].value
-                                                )
-                                            }.join(UserTable, JoinType.INNER){
-                                                (AccountsEmployeeTable.userId eq UserTable.id)
-                                            }.selectAll().map{
-                                                    lrow ->
-                                                UserAPI(
-                                                    lrow[UserTable.login],
-                                                    ""
-                                                )
-                                            }[0],
+                                            creatorUser = UserAPI(
+                                                TaskTable.join(AccountsEmployeeTable,JoinType.INNER){
+                                                    (TaskTable.creatorId eq AccountsEmployeeTable.id).and(
+                                                        TaskTable.id eq row[TaskTable.id].value
+                                                    )
+                                                }.join(UserTable,JoinType.INNER){
+                                                    (UserTable.id eq AccountsEmployeeTable.userId)
+                                                }.selectAll().map{
+                                                    lrow->lrow[UserTable.login]
+                                                }[0],
+                                                ""
+                                            ),
                                             completed = row[TaskTable.completed]
                                         )
                                     )
+                                    println("Выполнили код по добавлению задачи, где ты исполнитель")
                                 }
                         }
                         // блок кода - добавить все задачи, где ты исполнитель
@@ -1540,6 +1552,68 @@ fun Application.module() {
                     call.respond(DeleteBPResponse("500","Не удалось обновить данные"))
                 }
             }
+            post("/delete-accountant/"){
+                val principal = call.principal<JWTPrincipal>()
+                val loginSecret = principal?.payload?.getClaim("login")?.asString()
+
+                val deleteAccountant = call.receive<DeleteAccountantRequest>()
+
+                val sentAccountsDepartment = deleteAccountant.accountsDepartment
+                val businessProcess = deleteAccountant.user
+
+                var result:String? = null
+
+                transaction{
+                    val departmentIdList = AccountsDepartmentTable.selectAll().where {
+                        (AccountsDepartmentTable.accountsName eq sentAccountsDepartment.name).and(
+                            AccountsDepartmentTable.authorLogin eq sentAccountsDepartment.authorLogin
+                        )
+                    }.map { row ->
+                        row[AccountsDepartmentTable.id]
+                    }
+
+                    val creatorIdList = AccountsEmployeeTable.join(UserTable,JoinType.INNER){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            UserTable.login eq loginSecret.toString()).and(
+                            AccountsEmployeeTable.departmentId eq departmentIdList[0]
+                        )
+                    }.selectAll().map{
+                            row ->
+                        row[AccountsEmployeeTable.id]
+                    }
+
+                    val uId = UserTable.selectAll().where {
+                        UserTable.login eq loginSecret.toString()
+                    }.map{
+                            row ->
+                        row[UserTable.id]
+                    }
+
+                    if(creatorIdList.isNotEmpty()){
+
+                        val employeeId = UserTable.join(
+                            AccountsEmployeeTable, JoinType.INNER
+                        ){
+                            AccountsEmployeeTable.userId eq UserTable.id
+                        }.selectAll().map{
+                            row->
+                                row[AccountsEmployeeTable.id]
+                        }
+
+                        AccountsEmployeeTable.deleteWhere {
+                            AccountsEmployeeTable.id eq employeeId[0]
+                        }
+                        result = "200"
+                    }else{
+                        // нет такого бухгалтера
+                    }
+                }
+                if(result=="200"){
+                    call.respond(DeleteAccountantResponse("200","Запрос успешно выполнен"))
+                }else{
+                    call.respond(DeleteAccountantResponse("500","Не удалось обновить данные"))
+                }
+            }
         }
     }
 }
@@ -1629,4 +1703,71 @@ fun parseStringToLocalDateTime(dateTimeString: String): LocalDateTime? {
         null // Если строка не соответствует формату
     }
 }
+fun startBackgroundTask() {
+    CoroutineScope(Dispatchers.IO).launch {
+        while (true) {
+            delay(10 * 60 * 1000) // 10 минут
+            fetchDataFromDb()
+        }
+    }
+}
+// Функция для выполнения SELECT-запроса
+fun fetchDataFromDb() {
+    transaction {
+        // Пример SELECT-запроса
+        val taskList = TaskTable.selectAll().where{
+            (TaskTable.cycleType eq "dom").or(
+                TaskTable.cycleType eq "periodic"
+            )
+        }.map { row ->
+            FullTask(
+                id = row[TaskTable.id].value,
+                name = row[TaskTable.name],
+                description = row[TaskTable.description],
+                beginTime = row[TaskTable.beginTime],
+                endTime = row[TaskTable.endTime],
+                priority = row[TaskTable.priority].toString(),
+                percent = row[TaskTable.percent].toString(),
+                file = row[TaskTable.file],
+                completed = row[TaskTable.completed],
+                responsiblePersons = EmployeeTaskTable.join(AccountsEmployeeTable, JoinType.INNER){
+                    (EmployeeTaskTable.employeeId eq AccountsEmployeeTable.id).and(
+                        EmployeeTaskTable.taskId eq row[TaskTable.id].value
+                    )
+                }.join(UserTable, JoinType.INNER){
+                    (AccountsEmployeeTable.userId eq UserTable.id)
+                }.selectAll().map{
+                        lrow ->
+                    UserAPI(
+                        lrow[UserTable.login],
+                        ""
+                    )
+                }.toMutableList(),
+                creatorUser = UserAPI(
+                    UserTable.join(
+                        AccountsEmployeeTable,JoinType.INNER
+                    ){
+                        (UserTable.id eq AccountsEmployeeTable.userId).and(
+                            AccountsEmployeeTable.id eq row[TaskTable.creatorId]
+                        )
+                    }.selectAll().map{
+                            lrow ->
+                        lrow[UserTable.login]
+                    }[0]
+                    ,""
+                ),
+                cycleDuration = row[TaskTable.cycleDuration],
+                cycleType = row[TaskTable.cycleType]
+            )
+        }
+        for(task in taskList){
+            if(task.cycleType == "periodic"){ // каждые N дней
 
+            }
+            if(task.cycleType == "dom"){ // день месяца
+
+            }
+        }
+
+    }
+}

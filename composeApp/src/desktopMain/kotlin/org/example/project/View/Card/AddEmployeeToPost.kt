@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -143,7 +144,13 @@ fun AddEmployeeToPostCard(
                     //удалить пользователя из списка
                     onDismiss.invoke()
                 },
-                    modifier = Modifier.padding(10.dp)
+                    modifier = Modifier.padding(10.dp),
+                    colors = ButtonColors(
+                        contentColor = Color.White,
+                        containerColor = Color(40,100,206),
+                        disabledContentColor = Color(0,75,174),
+                        disabledContainerColor = Color(192,220,253)
+                    )
                 ){
                     Text("Добавить бухгалтера")
                 }

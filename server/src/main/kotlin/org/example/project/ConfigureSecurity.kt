@@ -8,23 +8,22 @@ import java.util.*
 import io.ktor.server.application.*
 
 fun Application.configureSecurity() {
-    val secret = Secret.secret // Замените на реальный секрет
-    val issuer = "OAO Planning"
-    val audience = "Android AND Desktop APP"
-    val realm = "Command Planning APP"
+    val secret = Secret.secret // секретный ключ для подписи токена
+    val issuer = "OAO Planning" //установка названия издателя
+    val audience = "Android AND Desktop APP" // установка названия приложения потребителя
 
-    install(Authentication) {
-        jwt("auth-jwt") {
-            verifier(
+    install(Authentication) { // установка аутентификации
+        jwt("auth-jwt") { // создание JWT провайдера
+            verifier( //проверка токена
                 JWT
                     .require(Algorithm.HMAC256(secret))
                     .withAudience(audience)
                     .withIssuer(issuer)
                     .build()
             )
-            validate { credential ->
-                if (credential.payload.getClaim("login").asString() != "") {
-                    JWTPrincipal(credential.payload)
+            validate { credential -> // проверка содержимого токена - логин
+                if (credential.payload.getClaim("login").asString() != "") {//проверка логина
+                    JWTPrincipal(credential.payload) // объект токена
                 } else {
                     null
                 }

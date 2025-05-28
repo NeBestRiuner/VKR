@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -338,7 +339,13 @@ fun ShowTaskCard(
                         onClick = {
                             updateTask(task)
                             onDismiss()
-                        }
+                        },
+                        colors = ButtonColors(
+                            contentColor = Color.White,
+                            containerColor = Color(40,100,206),
+                            disabledContentColor = Color(0,75,174),
+                            disabledContainerColor = Color(192,220,253)
+                        )
                     ){
                         Text(
                             text = "Сохранить изменения"
@@ -356,7 +363,13 @@ fun ShowTaskCard(
                                     task.percent="0"
                                     updateTask(task)
                                     onDismiss.invoke()
-                                }
+                                },
+                                colors = ButtonColors(
+                                    contentColor = Color.White,
+                                    containerColor = Color(40,100,206),
+                                    disabledContentColor = Color(0,75,174),
+                                    disabledContainerColor = Color(192,220,253)
+                                )
                             ){
                                 Text("Отозвать принятие")
                             }
@@ -373,7 +386,13 @@ fun ShowTaskCard(
                                     task.percent = "0"
                                     updateTask(task)
                                     onDismiss()
-                                }
+                                },
+                                colors = ButtonColors(
+                                    contentColor = Color.White,
+                                    containerColor = Color(40,100,206),
+                                    disabledContentColor = Color(0,75,174),
+                                    disabledContainerColor = Color(192,220,253)
+                                )
                             ){
                                 Text("Отклонить")
                             }
@@ -384,7 +403,13 @@ fun ShowTaskCard(
                                     task.percent = "100"
                                     updateTask(task)
                                     onDismiss()
-                                }
+                                },
+                                colors = ButtonColors(
+                                    contentColor = Color.White,
+                                    containerColor = Color(40,100,206),
+                                    disabledContentColor = Color(0,75,174),
+                                    disabledContainerColor = Color(192,220,253)
+                                )
                             ){
                                 Text(
                                     text = "Принять",

@@ -8,6 +8,8 @@ import org.example.project.API.Data.CreateInviteCodeResponse
 import org.example.project.API.Data.CreateTaskRequest
 import org.example.project.API.Data.CreateTaskResponse
 import org.example.project.API.Data.CreateUserResponse
+import org.example.project.API.Data.DeleteAccountantRequest
+import org.example.project.API.Data.DeleteAccountantResponse
 import org.example.project.API.Data.DeleteBPRequest
 import org.example.project.API.Data.DeleteBPResponse
 import org.example.project.API.Data.DeleteBPTaskRequest
@@ -175,4 +177,9 @@ interface APIService {
         @Header("Authorization") token: String,
         @Body deleteBusinessProcess: DeleteBPRequest
     ):Call<DeleteBPResponse>
+    @POST("/delete-accountant/")
+    fun deleteAccountant(
+        @Header("Authorization") token: String,
+        @Body deleteAccountantRequest: DeleteAccountantRequest
+    ):Call<DeleteAccountantResponse>
 }

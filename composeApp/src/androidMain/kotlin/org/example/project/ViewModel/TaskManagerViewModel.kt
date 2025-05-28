@@ -4,6 +4,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
+import org.example.project.API.Data.DeleteAccountantRequest
+import org.example.project.API.Data.DeleteAccountantResponse
 import org.example.project.API.Data.GetProfileInfoResponse
 import org.example.project.API.Data.GetUsersListResponse
 import org.example.project.API.RetrofitClient.apiService
@@ -19,6 +21,7 @@ class TaskManagerViewModel: ViewModel() {
         AccountsDepartment(-1,"","","",0)
     )
     val employeeList = emptyList<User>().toMutableStateList()
+
 
 
 
@@ -55,5 +58,42 @@ class TaskManagerViewModel: ViewModel() {
 
     }
 
+    fun deleteUser(userSession: UserSession?, accountsDepartment: AccountsDepartment,
+                   user: User){
+        val token = userSession?.token
+        val call = apiService.deleteAccountant("Bearer $token",
+            deleteAccountantRequest = DeleteAccountantRequest(
+                user = user,
+                accountsDepartment = accountsDepartment
+            )
+        )
+
+        call.enqueue(object : Callback<DeleteAccountantResponse> {
+            override fun onResponse(call: Call<DeleteAccountantResponse>, response: Response<DeleteAccountantResponse>) {
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    if (result != null) {
+                        if(result.status=="200"){
+                            var selUser = User("","")
+                            for(usr in employeeList){
+                                if(usr.login == user.login){
+                                    selUser = usr
+                                }
+                            }
+                            employeeList.remove(selUser)
+                            // при успешном запросе удаляем бухгалтера из списка
+                        }
+                    }
+                    // Обработка успешного ответа
+                } else {
+                    // Обработка ошибки
+                }
+            }
+
+            override fun onFailure(call: Call<DeleteAccountantResponse>, t: Throwable) {
+                // Обработка ошибки сети
+            }
+        })
+    }
 
 }

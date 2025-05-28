@@ -27,7 +27,6 @@ import org.example.project.ViewModel.TaskManagerViewModel
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             val navController = rememberNavController()
             val authorizeViewModel = AuthorizeViewModel()
@@ -38,9 +37,6 @@ class MainActivity : ComponentActivity() {
             val hierarchyViewModel = HierarchyViewModel()
             val calendarViewModel = CalendarViewModel()
             val businessProcessViewModel = BusinessProcessViewModel()
-
-
-
             NavHost(navController = navController, startDestination = NavRoutes.Enter.route){
                 composable(NavRoutes.Enter.route){
                     EnterScreen(

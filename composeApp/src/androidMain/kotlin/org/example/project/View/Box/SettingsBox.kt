@@ -65,6 +65,8 @@ fun SettingsBox(
         mutableStateOf(User("",""))
     }
     val createCode = remember { mutableStateOf(false) }
+    val editHierarchy = remember { mutableStateOf(false) }
+    val createBP = remember { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(modifier = Modifier.selectableGroup().fillMaxWidth().padding(10.dp),
@@ -150,24 +152,31 @@ fun SettingsBox(
                         LazyColumn(Modifier.fillMaxSize()){
                             items(userList){
                                 user ->
-                                    UserRightItem(user.login, selectedUser, userRight)
+                                    UserRightItem(user.login, selectedUser, userRight,
+                                        Modifier.padding(10.dp),{onGetPermission.invoke(User(userRight.value.login,""))})
                             }
                         }
                     }
                 }else{
-                    onGetPermission.invoke(User(userRight.value.login,""))
+
                     Column(Modifier.padding(10.dp)){
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center){
+                            horizontalArrangement = Arrangement.Start){
                             IconButton(onClick = {selectedUser.value = false}){
                                 Icon(imageVector = Icons.AutoMirrored.Default.ArrowBack,
                                     "Кнопка назад")
                             }
-                            Text(userRight.value.login)
+                            Text(
+                                modifier = Modifier.weight(1f),
+                                text = userRight.value.login,
+                                style = TextStyle(textAlign = TextAlign.Center)
+                            )
                         }
                         Column{
                             RightItem("Право выдавать права",changeUserSettings)
-                            RightItem("Право приглашать сотрудников",inviteUserSetting)
+                            RightItem("Право приглашать и выгонять сотрудников",inviteUserSetting)
+                            RightItem("Право редактировать иерархию",editHierarchy)
+                            RightItem("Право создавать бизнес-процессы",createBP)
                         }
                     }
                 }
@@ -216,10 +225,12 @@ fun RightItem(rightName: String, checked: MutableState<Boolean>){
 }
 
 @Composable
-fun UserRightItem(login: String, selectedUser: MutableState<Boolean>, userRight: MutableState<User>){
-    Row(Modifier.fillMaxWidth().clickable {
+fun UserRightItem(login: String, selectedUser: MutableState<Boolean>, userRight: MutableState<User>,
+                  modifier: Modifier, sendRequestRight:()->Unit){
+    Row(modifier.fillMaxWidth().clickable {
         selectedUser.value = true
         userRight.value = User(login, "")
+        sendRequestRight.invoke()
     }.padding(start = 100.dp, end = 100.dp),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -115,12 +116,24 @@ fun UserProfileScreen(
                 })
             Button(
                 modifier = Modifier.padding(10.dp),
-                onClick = { showCard = true }){
+                onClick = { showCard = true },
+                colors = ButtonColors(
+                    contentColor = Color.White,
+                    containerColor = Color(40,100,206),
+                    disabledContentColor = Color(0,75,174),
+                    disabledContainerColor = Color(192,220,253)
+                )){
                 Text("Сменить пароль")
             }
             Button(
                 modifier = Modifier.padding(10.dp),
-                onClick = onSaveChanges){
+                onClick = onSaveChanges,
+                colors = ButtonColors(
+                    contentColor = Color.White,
+                    containerColor = Color(40,100,206),
+                    disabledContentColor = Color(0,75,174),
+                    disabledContainerColor = Color(192,220,253)
+                )){
                 Text("Сохранить изменения")
             }
         }
@@ -131,7 +144,14 @@ fun UserProfileScreen(
             ){
             Button(modifier = Modifier.padding(end = 10.dp, bottom = 10.dp), onClick = {
 
-            }){
+            },
+                colors = ButtonColors(
+                    contentColor = Color.White,
+                    containerColor = Color(40,100,206),
+                    disabledContentColor = Color(0,75,174),
+                    disabledContainerColor = Color(192,220,253)
+                )
+            ){
                 Text("Удалить аккаунт")
             }
         }

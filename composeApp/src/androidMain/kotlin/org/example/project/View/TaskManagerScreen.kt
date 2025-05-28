@@ -188,7 +188,6 @@ fun BottomNavigationBar(navController: NavController) {
         BottomNavItem.Calendar,
         BottomNavItem.Hierarchy,
         BottomNavItem.BusinessProcess,
-      //  BottomNavItem.Analytic,
         BottomNavItem.Settings
     )
 
@@ -265,7 +264,8 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
         startDestination = BottomNavItem.Calendar.route,
         modifier = Modifier.fillMaxSize()
     ) {
-        composable(BottomNavItem.Calendar.route) { HomeScreen(
+        composable(BottomNavItem.Calendar.route) {
+            HomeScreen(
             taskList = taskList,
             createdTask = createdTask,
             creatorUser = creatorUser,
@@ -280,7 +280,8 @@ fun NavigationGraph(navController: NavHostController, userList: SnapshotStateLis
             startGetMessage = startGetMessage,
             stopGetMessage = stopGetMessage,
             onDeleteTask = onDeleteTask
-        ) }
+        )
+        }
         composable(BottomNavItem.Hierarchy.route) {
             var isArrowed = remember { mutableStateOf(false) }
             var secondDot = remember { mutableStateOf(0) }

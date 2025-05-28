@@ -12,6 +12,7 @@
         android:theme="@style/Accountant_plan_APP"
         android:usesCleartextTraffic="true"
         >
+        <profileable android:shell="true" />
         <activity
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"

@@ -93,7 +93,7 @@ fun CustomCalendar(
 
         // Сетка календаря (5 строк по 7 дней)
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().weight(1f)
         ) {
             var dayCounter = 1
             repeat(5) { row ->

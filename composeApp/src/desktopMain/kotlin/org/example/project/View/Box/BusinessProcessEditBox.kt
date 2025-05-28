@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -28,6 +29,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -193,7 +195,13 @@ fun BusinessProcessEditBox(
                             }
                         }
                         updateBusinessProcess.invoke()
-                    }
+                    },
+                    colors = ButtonColors(
+                        contentColor = Color.White,
+                        containerColor = Color(40,100,206),
+                        disabledContentColor = Color(0,75,174),
+                        disabledContainerColor = Color(192,220,253)
+                    )
                 ){
                     Text("Сохранить изменения")
                 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -102,12 +103,24 @@ fun ChangePasswordCard(
                             userSession
                         )
                         onDismiss.invoke()
-                    }
+                    },
+                        colors = ButtonColors(
+                            contentColor = Color.White,
+                            containerColor = Color(40,100,206),
+                            disabledContentColor = Color(0,75,174),
+                            disabledContainerColor = Color(192,220,253)
+                        )
                     ){
                         Text("Сменить пароль")
                     }
                     Button(modifier = Modifier.padding(top = 60.dp,start = 5.dp),
-                        onClick = onDismiss
+                        onClick = onDismiss,
+                        colors = ButtonColors(
+                            contentColor = Color.White,
+                            containerColor = Color(40,100,206),
+                            disabledContentColor = Color(0,75,174),
+                            disabledContainerColor = Color(192,220,253)
+                        )
                     ){
                         Text("Отменить")
                     }
